@@ -1,0 +1,1182 @@
+<title>Operación Polizón</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: single-column field kit for phones; the #tv view switches to a two-panel stand display. */
+:root{
+  --hielo:#eef4f7;      /* page ground, glacier white */
+  --papel:#ffffff;      /* cards */
+  --tinta:#10283a;      /* text, deep polar navy */
+  --tinta-suave:#4a6273;
+  --oceano:#1d5a7a;     /* secondary, Southern Ocean */
+  --parka:#e4552a;      /* accent, expedition parka orange */
+  --parka-osc:#b8411d;
+  --nativa:#3f6b2f;     /* native plants */
+  --invasora:#8cc12c;   /* invader lime */
+  --linea:#cfdde6;
+  --ok:#2e7d4f; --mal:#c0392b;
+  --display:"Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --texto:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+html,body{height:100%}
+body{background:var(--hielo);color:var(--tinta);font-family:var(--texto);font-size:17px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+#app{max-width:540px;margin:0 auto;padding-block:14px 28px}
+h1,h2,h3{font-family:var(--display);line-height:1.08;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.3rem, 10vw, 3.4rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.65rem;font-weight:800}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.kicker{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--oceano)}
+[hidden]{display:none!important}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--papel);border:1px solid var(--linea);border-radius:14px;padding:16px}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--parka);color:#fff;font:700 1.15rem var(--texto);
+  padding:15px 18px;min-height:54px;cursor:pointer;width:100%;box-shadow:0 3px 0 var(--parka-osc)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--parka-osc)}
+.btn.sec{background:var(--papel);color:var(--tinta);border:2px solid var(--tinta);box-shadow:none}
+.btn:focus-visible,.opt:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--oceano);outline-offset:2px}
+input[type=text],input[type=number]{font:1.05rem var(--texto);padding:12px;border:2px solid var(--linea);border-radius:10px;width:100%;
+  background:var(--papel);color:var(--tinta);box-sizing:border-box}
+label{font-weight:700;font-size:.95rem}
+.hero-art{width:100%;height:auto;display:block;border-radius:14px}
+.small{font-size:.86rem;color:var(--tinta-suave)}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.tag.nat{background:#e1ecd9;color:var(--nativa)} .tag.inv{background:#eef7d8;color:#4f7412;border:1px solid var(--invasora)}
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--hielo);padding-block:6px 8px;display:flex;flex-direction:column;gap:6px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--hielo)}
+.hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.hud-round{font-weight:700;font-size:.9rem;color:var(--oceano)}
+.hud-score{font-family:var(--display);font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.timebar{height:10px;border-radius:99px;background:var(--linea);overflow:hidden}
+.timebar>i{display:block;height:100%;background:var(--parka);transform-origin:left;transition:transform .1s linear}
+.prompt{font-weight:700;font-size:1rem}
+.prompt b{color:var(--parka-osc)}
+.stage svg{display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);margin:0 auto;touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;border-radius:14px;background:#dfe9ef}
+/* effects */
+.fx-ring{fill:none;stroke:var(--ok);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:ring .6s ease-out forwards}
+.fx-bad{stroke:var(--mal)}
+.fx-txt{font:800 15px var(--display);fill:var(--ok);paint-order:stroke;stroke:#fff;stroke-width:3px;animation:rise .9s ease-out forwards}
+.fx-txt.bad{fill:var(--mal)}
+@keyframes ring{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+@keyframes rise{from{transform:translateY(0);opacity:1}to{transform:translateY(-22px);opacity:0}}
+.found-mark{fill:none;stroke:var(--ok);stroke-width:2.5}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--tinta);color:#fff;
+  padding:10px 16px;border-radius:10px;font-weight:700;z-index:20;max-width:90vw;text-align:center}
+/* field guide */
+.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.guide .card{padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.guide svg{width:100%;height:auto;background:#8b7d70;border-radius:8px}
+.guide .card.inv{border:2px solid var(--invasora)}
+.guide p{font-size:.8rem;line-height:1.3}
+.sci{font-style:italic}
+/* quiz */
+.opt{appearance:none;text-align:left;width:100%;font:1rem var(--texto);color:var(--tinta);background:var(--papel);border:2px solid var(--linea);
+  border-radius:12px;padding:14px;min-height:52px;cursor:pointer}
+.opt.right{border-color:var(--ok);background:#e3f2e8}
+.opt.wrong{border-color:var(--mal);background:#f8e3e0}
+.fact{border-left:5px solid var(--oceano)}
+.fact .src{font-size:.78rem;color:var(--tinta-suave);margin-top:6px}
+.bigscore{font-family:var(--display);font-weight:800;font-size:4.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:1.6rem;font-weight:700;letter-spacing:.2em;background:var(--tinta);color:#fff;
+  padding:6px 14px;border-radius:8px;display:inline-block}
+details summary{cursor:pointer;font-weight:700}
+.refs{font-size:.8rem;padding-left:18px;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.refs a{color:var(--oceano);word-break:break-all}
+/* TV */
+body.tv #app{max-width:1400px}
+.tv-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.tv-grid{grid-template-columns:1fr}}
+.tv-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
+.tv-head h1{font-size:clamp(2.2rem,4vw,3.6rem)}
+.future svg{width:100%;height:auto;display:block;border-radius:14px}
+.future svg{transition:opacity .8s}
+.fut-text{font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,2.2vw,1.7rem);line-height:1.25;margin:0;min-height:2.6em}
+.meter{height:22px;border-radius:99px;background:var(--linea);overflow:hidden}
+.meter>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f0c541,var(--parka),#a3241a);transition:width .3s}
+.qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+#qr{background:#fff;padding:10px;border-radius:10px;min-width:180px;min-height:180px;display:grid;place-items:center}
+#qr img,#qr canvas{display:block;width:180px;height:180px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+/* swipe: ¿pasa o no pasa? */
+.swipe{display:flex;flex-direction:column;gap:12px;padding-top:6px}
+.deck{position:relative;height:min(50dvh,360px);touch-action:none}
+.icard{position:absolute;inset:0;background:var(--papel);border:2px solid var(--linea);border-radius:18px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:22px;text-align:center;box-shadow:0 8px 22px rgba(16,40,58,.14);
+  transition:transform .26s ease, opacity .26s ease;user-select:none;-webkit-user-select:none;cursor:grab}
+.icard .em{font-size:5.5rem;line-height:1}
+.icard .nm{font-family:var(--display);font-weight:800;font-size:1.45rem;text-wrap:balance}
+.stamp{position:absolute;top:16px;font:800 1.1rem var(--display);letter-spacing:.08em;padding:4px 10px;border:3px solid;border-radius:8px;opacity:0}
+.st-rev{left:16px;color:var(--parka-osc);transform:rotate(-10deg)}
+.st-pas{right:16px;color:var(--ok);transform:rotate(10deg)}
+.swipe-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn.pas{background:var(--ok);box-shadow:0 3px 0 #1f5a37}
+/* logo y créditos */
+.logo{display:inline-block;aspect-ratio:1;background:#f7f7f7 url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAABaKADAAQAAAABAAABaAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/+IB2ElDQ19QUk9GSUxFAAEBAAAByGxjbXMCEAAAbW50clJHQiBYWVogB+IAAwAUAAkADgAdYWNzcE1TRlQAAAAAc2F3c2N0cmwAAAAAAAAAAAAAAAAAAPbWAAEAAAAA0y1oYW5knZEAPUCAsD1AdCyBnqUijgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJZGVzYwAAAPAAAAAcY3BydAAAAQwAAAAMd3RwdAAAARgAAAAUclhZWgAAASwAAAAUZ1hZWgAAAUAAAAAUYlhZWgAAAVQAAAAUclRSQwAAAWgAAABgZ1RSQwAAAWgAAABgYlRSQwAAAWgAAABgZGVzYwAAAAAAAAAFdVJHQgAAAAAAAAAAAAAAAHRleHQAAAAAQ0MwAFhZWiAAAAAAAADzVAABAAAAARbJWFlaIAAAAAAAAG+gAAA48gAAA49YWVogAAAAAAAAYpYAALeJAAAY2lhZWiAAAAAAAAAkoAAAD4UAALbEY3VydgAAAAAAAAAqAAAAfAD4AZwCdQODBMkGTggSChgMYg70Ec8U9hhqHC4gQySsKWoufjPrObM/1kZXTTZUdlwXZB1shnVWfo2ILJI2nKunjLLbvpnKx9dl5Hfx+f///8AAEQgBaAFoAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwQDAwMEBQQEBAQFBgUFBQUFBggGBgYGBgYICAgICAgICAkJCQkJCQsLCwsLDAwMDAwMDAwMDP/bAEMBAgICAwMDBQMDBQwIBwgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/dAAQAF//aAAwDAQACEQMRAD8A/dyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//Q/dyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiimsyopdyFVQSSegAoAdRXles/Ep9KufLj07zoW/1chk27sdcjacfnWR/wt9v+gWP+/3/ANjQB7XRXif/AAt9v+gWP+/3/wBjR/wt9v8AoFj/AL/f/Y0Ae2UV8hfFT9r3wl8INMsNT8Vae7C/vI7aOG3lDTFCw86YKVGViQ7j6nCjk19WaPq+meINJstd0W5jvNP1CCO5triI7klilUMjqfQg1jDEU5VJUoy96O67XPSxOT42hhKOOrUnGlVvyyez5d7GjRRRWx5oUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB/9H93KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK4fxRq//MMt29DMR+i/410Gtaoul2hdcGZ/ljX37n6CvKXdpGLuSWYkknkkmgChqFlHf2r278E8qfRh0NeXTwSW8jRSjDISpHuK9ernNd0aXUNs9lGZLheNiDLOPYDuP5UAefVl63rWmeHNIvNe1qdbWxsIXnnlc4CogyfqewHc8V2R8NeIzwNMu8f9cm/wr8rv21fi/f3GuyfB7TBNa2+lukmr71aNprkgPHDg4JSMEMexY+1eVnGZLBYd1euy9T73w54Lq8TZzTwMXamvem+0Vvbzey9T5b+NXxW1X4u+N7rxJeborGPMGm2pPEFqp+UEf33+859T6AV+iv8AwTo/aa+w3SfADxrd/wCjXLvJ4buJm/1cpy0lgST0fl4f9rcvcV+RtWrG+u9NvINQ0+Z7a6tZUmgmiYrJHJGQyOjDkMpAINfmGBzWth8V9ZvdvfzP7s4p4By7N8heRqChGKXs3b4Gl7rX691c/r+or5L/AGP/ANo20/aB+G0U2pyxp4s0NUtdagGAZGxiO7Rf7kwGT2Dhh6V9aV+vYfEQr041abumf505zk+KyvG1cvxkeWpTdmv1Xk90+wUUUVseYFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB/9L93KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAqKaaO3ieeY7UQFmPoBUted+J9W+0ynT7dv3UZ/eEfxMO30H86AMXVb+XUrtrh+F6Iv8AdUdB/jWbRRQAV6H4Y0n7NF9vnH72UfID/Ch7/U/yrnfD2knULrzpl/0eE5b/AGm7L/jXp9AC5Nfmd/wUI/ZmPj/wy3xl8GWm/wAReH4MapBEvz3unR8mTAGWlt+o7lMjsK/TCkZUdGjkUMrgqykZBB4IIPY1x4/BU8VQlRqdfwfc+j4U4mxeQZnRzPBv3oPVdJR6xfk1/mfx8cduaK+7f25v2aH+Cfj0+LfDFqV8HeJ5nltgg+SxvDl5bQ44Cnl4f9nK/wANfCVfjuMwlTDVpUai1R/pLw3xBhM7y6jmeCleFRX80+qfmnoz2n4B/GnxB8B/iTp3jzQy0sMTeRqNmGIW8spCPNhYdM/xIT0cA1/Tx4L8Y+H/AIg+E9L8a+FbpbzStXt0ubaVeu1hyrDs6HKuvUMCK/ker9K/+CfX7Tf/AArrxSPhD4zu9nhrxFcD+zppWwljqMmAFyeFiuDhW7B9p7mvpOF849hU+rVX7stvJ/8ABPxPx28OP7VwX9t4CH7+iveS3nBfrHdeV12P3dooPHBor9KP4jCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//T/dyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooqteXcNlbPcznCoOncnsB7mgDH8Qat/Z9t5UJ/fy8Lj+Ed2/wAK8xJyc96s3t5NfXL3M5yznp2A7AfSqtABVmztJb25S1hGWc49gO5PsKrV6b4d0n7Bb+fMP38wBOeqr2H+NAGzZWcVhbJbQjCqOT3J7k+5q1RRQAUUUUAedfFj4Y+GvjD4C1X4f+Kog9nqURVJQAZLadeYbiIno8bYI9RkdCa/l++Knw08SfCLx5q3gDxXF5d/pcxTeARHcQtzFcRE9UkXDD8QeQa/rGr4O/bq/ZnHxo8Bnxp4VtQ/jDwxC8sKoPnv7JcvLanHV15eL3yo+9Xy/E2UfWqPtqa9+P4rt/kfungj4i/2DmP9m42dsNWdtdoT2UvR7S+T6H89FORijBlJBBBBBwQR0II6EUMrIxRwVZSQQRggjqCD3FNr8w2P7u0ku6Z/Qp+wn+0uPjR4F/4QrxVdB/GHhiFI5Wkb57+xXCRXQz9514SX3w38Vfelfyb/AAu+JPib4R+O9J8f+E5jFf6XMH2EkRzxHiWCUDqki5Vh+PUCv6gPhJ8UvDXxl+H+k/EHwrKGtNRi/ewkgyWtwvE1vIB0eNsj3GCODX6hw3nH1qj7Go/fj+K7/wCZ/B3jZ4cvIMx/tHBw/wBmrO6ttCW7j6PePzXQ9Iooor6c/DgooooAKKKKACiiigAooooAKKKKACiiigAooooA/9T93KKKKACiiigAooooAKKKKACiiigAooooAKKKKACvMvEOr/b7kwQn9xCcD/abu3+FdD4m1b7LD9ggP72UfOR/Ch7fU/yrzugAooq/p1hLqN0ltHwDy7f3VHU/4UAbfhnSftU4vZ1/dRH5Af4nH9BXo1Q28EVtClvCNqIAAKmoAKKKPc8AUm0k2wCivBdL+NNrd/Fz/hX1ysaWd/aM+mz9Ge4hZg6MehEiglPdcd696ry8nznCZph/rODlzRu1939XXkZUq0Kibg9gooor1TU/CH/goN+zKfh14qPxf8HWm3w14juD/aEMS4Sx1KTktgcLHcHLDsHyO4r81a/rg8beDfD/AMQvCeqeCvFVst3per2721xG2M7WHDqezocMrdQQDX8wvx5+DHiD4EfEnUvAWvBpI4W87T7wjC3llIT5My9s4+VwOjAivzTijKPq9X6zSXuS38n/AME/uDwJ8Rv7XwP9i4+f7+ivdb+3BfrHZ+Vn3PGa+5P2Hv2l5Pgd8QB4b8TXDDwb4mlSG8DHKWV0flhvQOwGdkvqnP8ACK+G6Oowa+cwWLqYatGtTeqP2fiXh7CZ3l1bLMbG8Jq3mn0a809Uf2DI6SxrLEyujgMrKcqynkEEdQR0NOr8xP8Agnn+03/wnHh5fgn40vN2vaFBu0eeZvmvNPj4MJJ5aW3HTuY8f3TX6d1+x4HGU8VQjWpvR/h5H+bXFfDOLyDM62WYxe9B6PpJdJLya/yCiiius+dCiiigAooooAKKKKACiiigAooooAKKKKAP/9X93KKKKACiiigAooooAKKKKACiiigAooooAKoalfxabaPcyckcIv8AeY9B/jV5mVFLsQAoySegArynW9VbU7ssuRDH8sY9u7fU0AZc88tzM88x3O5yx96ioooAVVLMFUZJOAB3Jr1XQ9KXTLUBwPOkw0h/kv4Vz3hfSd7DU7hchTiIHuehb8O1d3QAUUVyGheM9N1i8m0mb/RNRt3aN7eQ/eKnBMbcbh3x19q8/F5rhMNWpYfEVFGVS/Lfq10vtfyJcknZnX1yPjrVTo/ha+ukbbI6eTGeh3SHbx9ASa66vG/jJdlNKsLIHHnTtIR6iNf8Wr5vxDzOWA4dxmIg7PlsvWXu/qZ4iXLTkz87/irrN14c8e+H9fsmKz6ckVzGQcfNFMWx+OMGv1k0nUrfWdKstYtDmC+t4rmM/wCxKgcfoa/IX46c+ItPz/z5/wDtRq/Rz9nLWG1r4MeGp5G3PbQPZsf+vaVowP8AvkCvz3wXxr9hLCvZxUvu0f5nj5VVftqlP5nt1FFeN6l8a/C6ePdO+Gvh/Os61dz+XceQw+z2caAtK80ozlkUE7Fyc8Eiv2zE46hh3FVp2cnZLq35HtTqxjZSe57JXyN+2J+zja/tAfDeQaVEieLdBWS60ecgAy8Zls3b+5MBx6OFPrX1zRV4nDU69KVGotGezkedYrKcdRzHBS5alN3X6p+TWj8j+P8Au7S60+7msL6J7e5tpHhmhkBV45EJV0ZTyCpBBBqvX61f8FF/2ZRpV63x98FWmLO8dY/EdvCvEU7fLHfYHRZOElP97DfxGvyVr8dzLATwdeVGfyfdH+kfBXFuF4jymlmWFe+ko9YyW6f6d1ZnQ+EvFWu+CPEum+LvDF09lquk3CXVrOhwVkjORn1Uj5WU8EEg1/Tp+zv8cNC+P3wz0/xxpWyG9AFtqtkDlrS+jA8xMddjffjPdSO4Nfy1V9S/sl/tEX/7PfxMg1W6eSTwzq5S01u1UkjySfkuUX/npATuHcruXvXqcOZv9Tr8lR+5Lfyff/M+D8ZvDtcRZZ9awkf9popuPeUesP1j5+p/THRVLTdS0/WdOtdX0m4ju7K9hS4t54mDRyxSKGR1YdQQQRV2v1XzR/AsoOLcZKzQUUUUEhWRr+rJoej3eqyLv+zxlgucbmPCj8SRWvWN4h0HTvFGiXmgaqHNrfRGKTy3McgB5DI45VlIBB7EVx5jSr1MLVp4WXLUcWovs7aP7yZ35Xy7nz1p3j/xNq3ivS4Li9aJLq8jjW2hG1GBOWXb1YBckk9AM19PV5r4J+E3g3wHcvqGkw3F1qDoY/tt/O1zcKh6ojNwgPfaBnvmvSq+X4H4cxuUYOcMwxLrVZy5m227aWsrmOGpzjH947sKKKK+0OgKKKKACiiigD//1v3cooooAKKKKACiiigAooooAKKKKACiisnWdTXTLQuD++fKxj39foKAOf8AFOrYH9mW7c8GYj9F/qa4WnO7SO0jkszEkk9ST3ptABWto2mvqd4sPSNeZG9F9Pqe1ZkUbzSLFECzuQFA7k161pOmpplosC8ufmkb1b/AdqANCONIkWOMbVUAADsBT6K5tPFmif2rLolzP9lvImx5c/yBweVKN0II6c59q48XmGGwrgsTUUOZ2V3a77X7icktzpK+afinpj6X4nTVLbMYvUEoZTgiWP5WI9D0P419LV5r8U9I/tHwy14gzLYOJs/7B+Vx+oP4V8F4q5M8w4eqzpfHStUi1/d3t8rnPi4c1N26Ff4eeOjr6DSNVYDUIlyjnjz0HX/gY7+vWuR+M0xOoabb9khkf/vpgP6V4/aXVxY3UV5aOY5oXDoy9Qw6V7J4xth4y8LWfjSxz51rGY7qEchQD85H+63P+6c1+L0+LMZxFwjicqqvmr0eWV+sqcXq/Nx691qcSrSqUXB7o/PD46c+IrA/9Of/ALUavt39ji8Nx8JZrUkk2urXKAegdI3wPzNfE3xviln8T6ZBAhkkktQiIoyWZpSAAO5J4r6ycyfsvfAT7O0/meJ9dkLIhOVhu54wGKD+7BGBk939jXv+FlV4SjLMan8OnT1fm7WS82ebgpezr1Kz+FIy/wBpf9oabSZbj4c+BbnZd4MeqX8R+aHPBt4WHR8ffYfd6DnOOa/Yt8Hm51XXPHlyhK2sY0+2ZucyzfvJmBPcKFH/AAKvhmeaW4lkuJ3aSWRmd3Y7mZmOSxJ6knk1+yXwE8HjwT8KtD0uRNl1cw/b7rsfOuv3mD/uqVX8K+t4TrYjO87lmGJelNXS6K+iS/MvL5TxWKdaeyPYqKa7pEjSyMERAWZmIAAHUkngCvOdI+LHgrxF4tPgvw3ef2tfxRPNcyWi77a2SPjMk33SSxCgKScmv1yri6NOcaU5pSlsur+R9FKpGLSb1Z2mt6LpXiTR73w/rltHeafqMEltdW8o3JLFKpV1Ye4NfzOftR/s/wCq/s9/E268NOHm0K+3XeiXjZIltGb/AFbNjHmwn5HH0b+Kv6d68D/aK+AHhn9onwE/g/XJfsF7byi503U0jEslnOOCdpK7kdcq6bhkYOcgV5ef5SsbQ9xe/Hb/ACP1vwl8RJcL5n/tDbw1XSa3t2kl3XXuj+XPpRX7BH/glK/b4kL/AOCg/wDyVSn/AIJSN/0UkH/uEf8A3VXwv+q+Y/8APv8AFH9Vf8R44N/6Cn/4BP8AyD/gnP8AtN7Nn7P3je7+Vt0nhq4mbofvSafk+vLwj/eUfwiv2Fr8htO/4Ja6jpN/barpnxQa1vLOVJ7eeLSirxSxsGR1YXWQVIBBr9ZNBtdWsdD0+y169TUdSgt447q8ji8hbiZVAeURbm2bzzt3HGa+7yKGMpUPY4uPw7O6en/AP5P8VsVw5js1eZ8PVrqrdzjyuNpd1dLSXXzv3NWiqOp6jbaTp8+pXZxFboXbHU47D3J4FfOOq/GDX452vofKtrOE7zFsDFkB6Mx5yenGOa8bijjzLMir0cLiryqVLWjFXdm7Xfz+bPyariI02kz6cqKeeG2ie4uHWOKMFndjhVA7kmnRO0kaOylCyglT1GRnB+leVfGK+ay8LxhpBFBLcqszswVdoUsASeACQPyr1uJs4nleVV8wpw55QV0u72X/AAS6s+SDkdTb+PfCF1exafBqcRnnkEUQIZQ7noqsQASewzz2rr6+LPAWgXnjnxdpU9lFIdE0e6S/u77aVhllg5ht4WIw5L4ZyuQAuM5NfadeTwFnOa5plv1zNqSpyk3ypJr3ejszLDVZ1IuUkFFFFfanSFFFFABRRRQB/9f93KKKKACiiigAooooAKKKKACiiigCOaWOCJ5pW2ogLMT2AryXVNRk1K6a4fheiL6KOn4+tbvijVvPk/s+A/u4z+8I/iYdvoP51yFABRRW5oOlHUrrMg/cRYLn19F/H+VAHR+F9J8pP7SuF+dx+6B7Kf4vqe3tXY0gAAwBgDoKWgAryT4qeGP7R09detEzcWS4lwOWh9f+AHn6Zr1umsqurI6hlYEEHkEHqDXg8TZBQznLauX19pLR9pLZ/JmdWmpxcWfLXhf4iaz4fZLe4Y3tkOPKkOWQf9M3PI+hyK+htO1XR/F2ky/Y5BJFOjRSxnh494wQ69j6dj2r5t8deGH8M600cSn7Hc5kt27AZ+ZPqp/TFYOia5qPh6/TUNNk2OvDKfuyL3Vh3H8q/mPh/j3M+G8ZUyTO71KKbjJPVxXeL6q2tuq2PLp150m6c9UU7+zl0++uLCYYe3leJvqpIzXrHwj1NDd33hy7+aC9iMioehZRtcfip/SuK8ZX1jrOpJrtgNgvolaaLvHOnyuD9eCD3qp4R1A6X4m028zhVuFRv92T5G/Q18nw3i6WUcUU3SlzUuflv0cJ6fkzKk+SqrbHNaX8Ohq/7SOnWl9HvtPDVpLfuGHDGOYrbA/V2Vvwrxb9rXxq/iT4nvoUL7rPw7CLVQDx9okAknb65Kp/wGv0nTQrLRvEet+NpSoN1ZQRyHusdmJHY/juH5V+JviTWJvEPiHU9euCTJqN5Pctn/prIWA/AECv2ziHLo5Jk9HKqf25yk/RP3fwscuZx9jSVJfabf8AkdV8JvCTeOPiNoPhvaWhuLxHuOMgW8P72Un22qR+NfrJ8Tvi34P+E+krd67LvuZFP2TT4CDcTY4GF/hQdC7cD3Nfmr8FPGulfCy013x/cIl1q5gGmaPasfvTS/PNM/cRxqFBPcttHfHj/iXxNrni/WbnxB4iu3vb66YtJK56DsqDoqL0VRwBWGV8SLJss9lhUnWqu7f8q2Xq+vzOfD436tQtT+KX4HqPxP8Aj149+J87295cNp2kFsR6baMyxkZ481hhpW+vGegFfoB+zZ8Kx8OPAsd5qUOzWtcCXN3kfNFHjMMHttByw/vE+lfHv7LHwkPjfxUPF+tQbtE0KRXUOPkubwfNHH7rHw7/APAR3r9S+vNfa8B5TXqc2cY5uU56Rv26v59PI9PKcPKV8TV1b2Ciiiv0w9wKKKKACiiua1rxd4f8PzJbapdCOWTBCKpcgH+JgoOB9a4cwzPCYGl7fGVVTje15OyuxSkoq7ZW8eaNqviDwlqWk6HLFDqE0WbZpwTF5qMGVZMc7WxgkdM5r5o8H/A/4maprtlf/Eu70600qwnS5NhpxaR7uSFg6LK5GBHuAJGTnGMd6+vrW6tr23ju7SRZoZRuR0OQRU9eNjOFspzHG0c1rU1OcUuV30stV676HPUw0KklOXQKjmhhuIzFcRpKjdVdQyn6g8VJRX07V9DpEVVRFRFCqowFUYAHsBS0UUAFFFFABRRRQAUUUUAf/9D93KKKKACiiigAooooAKKKKACuf8Qat/Z1t5UJ/fzAhf8AZHdv8K17u6hsrd7mc4RBn3J7Ae5ryO+vJr+5e5mPLngdlHYD6UAVmbccnrTaKKAJ7a3lup0t4RueQ4H+J9hXrmn2MWnWqWsXReWP95j1JrD8NaT9jg+2Tr++lHyg/wAKf4nvXU0AFfE/x/8A2qNT+A3xY0fw9e6VHqvhzUNKS6uVjPl3kUhnkjLxOTsYbVHyMBnswr1H47ftHeF/gNBaf29pOqajcagjNai1hC2zMvVHunIRW7lRlsc4r8a/2gvjhf8Ax58Y2/im90uHSEsrQWVvBFI0zeUJGk3SOwXLEt2UCvqcgyWVeftK8L02n95+Z8d8YU8FS+rYKs1XjJOyXTre+h+8Hw3+JPhP4r+Fbfxj4MuXudPnd4j5sZikiljxvikRujLkZxkHOQSK7uviP/gn4Q3wGK9ca9fA/isVeL6R+3Trfgb4k+I/B/xKsBq+iWOtXtrb3tmqx3ttDHcMiK8fCTKqjH8Le5rglk9WpXr08Mr8j+dj3IcW4fDYLBV8wdnWS1S0Tst+x+j/AIr8O2/ibR5dPkwso+eCQj7kg6fgeh9q+RLq1uLG5ls7tDHNC5R0PUMDg19sWl1Bf2cF9bMWhuYkmjJGMpIoZTj6GvIfin4R+1wf8JJp6ZmhXF0ij78Y6Se5Xv7fSv5y8ZOBnj8N/bGDj+9pr3kvtRXX1j+R9Di6POvaRPi74q+Jb/wNolv46tkaaz0e5Q6pAvJfT5iI5nUf3oSVkHspHevRdP1G01Gyt9V02ZZ7a5jSeCaM5V0cBkYH3BBqDWNJs9e0m90TUUElrqFvJbTKeQUlUo36Gvin9lP4h3Oj6xrXwG8TT7rrQrm5XSpHPLRQyMJYAT/d++g/ukjtX4Tl2Tf2jkVXG4ZfvsJJOVutOT0frCV/k/I8xLS5+uXxa8Sf2X8E9f16NsPNo5VD/t3SiIfq9firqepWejadPqd++y3toy7nvgdh6kngD1r9P/j9q7p+zXaxqeby5s7RueojkZiP/IYr8WPGWsf8JZ440zwFatus4J1lvip4doxvKH2UDB9z7V/QWaYf+2sfQq1P4VOjGpN+Vua3q9EZ5kva10nsldnr+gz3l3pcF9fjZNdDz/L/AOeaycpH/wABXAPvmvQvBPg7WPHviex8K6FHvur2QLuI+WKMcvK/oqLkn8uprlQOiqPQAAfgABX6s/syfB3/AIV14ZPiPXIQviDW41Zww+a1tT8yQezNw0nvgdq+Z4ayOWc5i5SVqad5enSPz29DgwOFeIq+S3/yPdPBHg7SPAXhaw8KaIm22sYwpcjDSyHmSV/VnbJP5V1dQXNxHaW8l1NnZEpdsDJwPSuDs/Ft1qetWtrbxiK2d8MD8zuMHqe34V/SWGwT9l+6VoxR72NzjC4OrSw1R+9OySX3X9DsNV1a00i3Fxdk4Y4VVGSxxnArM8Pa9Nrcl0zRiKOLZsA5POc5P4VjePz/AKHaD/pq3/oNcl4d8QNoUkuYRMk23dzhhtz07d69OjgVUwvPBXkz5LMeJp4XPFQxE+WjHsurXXrue2UVlaPq9vrUDT2ySIEOG3rgZ9j0NateTODi3GW6PvsPXp1qcatJ3i9hQMnFfFuv6o2sa9qV4zlmF3NCQeqGFymwjttxivtGvmr4ofA7XvEWtS+Jfh5rkeh3l7j7fb3EZktp5AAonTAJSXAAbjDYB4PX8p8VuD8bn2BowwMvepyvy97q33owx1OcorkV7dC98EvEs11rWteFA2+Cwt7a7Pfy5Z3dSntuVQ2K+h68l+D3wst/hbodzazXbanq2pzC51G+cY82QDCqgOSEQE4zzyT7V61X1/B+UVssyfDYHESvKEbP/L5bGuFhKNKKnuFFFFfSnQFFFFABRRRQAUUUUAFFFFAH/9H93KKKKACiiigAooooAKKK5XxLqxtYfsNuf3so+cj+FD/U/wAqAOc8R6t/aFx9nhP7iE4BH8Tdz9B0Fc5RRQAV03hzSft1x9pnGYIT+DN2H0HU1iWNlLf3SWsPVjyeyqOpP0r121tYrO3S2gGEQY9ye5PuaALFFFFAHM+L/B3hnx74fuvC/i7T4tS028XbJDKM4PZ0bqjr1VlIINfLnhv9hn4AeGJHv9UtL7XAhaTGp3ZECIMnBSERghR1LE+9fZNH15rqo4yvSi4Qm0n0TPNxWUYLE1FWr0Yymtm1c+H/ABD+1t+zj8FdNPhj4d28WqG2ZiljoEKxWay9CXuGAjJOBll3mvxv8ZeIP+Es8Va14oMItjq1/c3xh3b/AC/tEjSbN2BnbnGcDNfsv8af2IvAfxP1tPEvhi6HhPUZpt2oC3gEttcqfvOIAyBJv9pTtbuM81p+Ev2SP2c/hFZLrniqOHVJbfDNf+Ip4xbqw5ysJ2Qj2BDGvq8vzXL8JSvQjKVSW/V3/I/Ls84Yz3M8So42pThRpu8WtFb03+/Q9K+JWuaxoH7NmqeIfD13JY6lYeF4bq1uYuHikjt42VhnI/Ovnr9lf9rzVvi5r0Xw18f2EA1iW0llt9StsRxXXkLudJYDwshXLZQ7Tg/KKt/tCftX/A2T4deI/AHh/VH1u+1XTZ9PhXTYS1rEzpsQtM21Nq8fc3cV+Yf7P3iw+CfjN4O8Qs/lxQarbxTt28m5P2eTPttc0YLJlWy6t9YpWlq1ffb8gzritUM9wqwWI5qdoxmk7x3t6Xt1P2I+IHhNvDOq+ZbKfsF2S0J7I3Voz9O3t9K/Df4532o/Db9pbVvEukEw3FtqFtqkOONwljR3B9nyyn2Nf0s+ItBtfEWlT6Vc8b+Y3xyki/dYf19q/Bz9uz4aXXh3xnpHjrUbV3tG2abqiISpLQsXjIbHAliLBW9RX82ZBwxQyHiutR5f9lxsJRS6KW7h81fl+4/T6lHkqabM+xf2jPHlnJ+yR4a8ZWLZt7q8F1AOxMsMjxqfcM4Ffkd8F4pdR8b3GpXGXeO2mldzz88rAZz75NfrB8UvhT4TtP2F9Ct9V8RG68LeHd2vWl1GNtzf2twJTplkM8LKzzQxykZA2tt7Y+Gf2RPg/r3xA1X7Lp8RjbVJF8y4IJS3soT+8mb6sSFH8RAFfV5jlKy3Iq2Eo+9Vq8lOPdpJJfck2znxtJqLjHeVkffH7Knwa/4S7XR4+8QwbtI0ibFpG4+W5vE5BIPVIuCfVsDsa+8vEvi+4trmbT9OUI0Z2tMeTnuFHTj1NdL4c8PaR4N8O2fh7RohBYaZAI4x3IUZZ2PdmOWY9yTXi13Mbm6muG6yyM/5nNfW8FcN0MvwvsErtat95P8ArQ+U4txtTLsNRwuHnyuV3Jrex7TqjO/hmdnOWa0BYnqSVGa8g0m+Gm38N8U8wRNkrnGeMda9TsfE+g3tultLKIzsCMkwwDgYIz0IqO78IaLfJ5tn+4ZuQ0R3If8AgPT8sV9Bh6yw8ZUq8HZjzjLp5pVo43K60ZSglpfW6d/6uPg17w7ryrbXYUEniOdf4jx8p6Z/GiXwXockokVJIwDkor/KfbnJH4GpNE8LWWlN58p+0XAPDsMKo/2V5596wPiR4quvDmmQw6awS8vGYK+M7EX7zAHvyAK+X4m4jwuSYGrj5N+zgturb0SXqz6LC4GdXDKpm9OEp+SX4+fpoeiRRRQRJBCgjjQYVVGABT6+L7/4veJfBNhLrt3ePfQwMm63nO4SbnAKgnkEgnBFfZcEq3EEVwmQsqK6564YAjP5181wXxthuJMNUxGHpyg4OzT/ADTR7eHxEKi5Yq1hLlp0t5HtYxLKqkohbaGPYE9q5C21nxa92sFxoyqhYBmD4Cr3O4kg4rtaK+zOkKK+RPiX+2z8FvhJ4yvvAnjdNcs9VsNpdV08vFIkg3JJE+8B0YdGHoR1FcH/AMPI/wBmj/nvrn/gtP8A8XXnTzbBwk4yrJNeZ9phfDriXE0YYjD5fUlCSTTUW009mmfe9FfBH/DyT9mf/nvrv/gtb/4uvW/g5+138Ffjn4km8JeCL+7XVYrdrlLe/tjbGaNDh/JJYh2XOSvXHPTOKpZrg6klCnVTb6XM8fwBxHgsPPFYvAVIQjq24uyXdn05RRRXefHhRRRQAUUUUAFFFFAH/9L93KKKKACiiigAoopGZUUu5AVRkk9ABQBQ1O/j020e5fk9EX+8x6D/ABrySeeW5meeZtzuck/WtTW9UbU7ssuRDHlYx6jux9zWNQAUoBJwOtJXX+GNJ8+T+0LhcxxnEYP8TDv9B/OgDotA0r+zrXfKP38wBf8A2R2X/H3rfoooAKKKKACiiuF+IniHxR4Z8NT6n4Q0CXxFqK8LaxyKm0YJ8xgTucD+6gLGtaFGVWpGlFq701dl97OXG4uGGoTxE02oq9km38ktWdtJLFCA0zqgYhQWIGSegGe5rmvGPgnwn4/0SXw54z0u31bTpuTDcJu2tjAdG+8jjsykEetfjj8TfiT8SfGuuu3jm4urea2fMdhte2itj22QnBBH95st713nw9/aj+J/gby7O6uhr+mpgfZ9RJeRVHaO4Hzj23bh7V+jy8OMbHDxr4etGU97Lb5S6/gfhsPHPLJ4yphMfhJQpbXer/7ej0/E2PjR/wAE/dX08y638GLs6jbZLHR76RUuUHpBcNhJB6B9rf7Rr4K8T/DX4h+A5zH4v8O6no7IeJLi3kSPI6FZQCh9iGr9odJ/bL+F15oMuo6pDfWGoQL/AMeHleaZW9IpV+Qj3fb9K+Qfi3+0541+JUU+iWQXRtBlyrWkR3Szoe08p6g91UAeua78hy/PqlT2OKpWitHKWj+Xf+tT5zjPM+DqVH61ltdupJXUYar53ty+m/kcD8Gv25viR8PhBo3jUHxboke1AZ326hAg4/d3BB8wAdFlB9Nwr7m8RX/wS/bP+HWoeHNA1aFdUubYqLS5AivreRfmjLRNywR8EOhYe+CRX5ueF/AeteONUTRvCujNqV2+MpDECqD+9I5G1F92IFfoV8Hf2M9C8L3lp4p8eyx3WrWzrNBaWJMUMDryC86bXkYeilV+oryuOOGMjVJxxFW1W90orXmWqdr6NPqer4b8TcS49xpxw/Ph+spuyS/uytd+mvyPnHXvgX8evFP7Lfw+/Z3n02aO8svF97Z6lcOdsMWlWLTS21w79PJbf+7PfCgZNffHwq+HXgf9n/wfB4a0krcXpjQXU6KPMmdBhVA/gjX+FSfc5JNeuW3ijwxqmpXXh2z1S0ub+3G2e1jmVpU3DoQDkHHYcivCvHXwT1mcy6l4K1W5DHLNY3E7kE/9MpSc/g/518Xgsuw1XFReYScGl7t1pru/K/c/UuJc0x9PCvFZDSjXlG6dpJtW3stm++t/I6/V/FepamGiT/RoG42J1I/2m6n6dKxbXStSvSBa20kgPcLhfzOBXyBqw8S6PfPYay15a3EZ+aOZnUj3GTyPccV7B4G+PPiDw+I9P8QqdVsFwockC5jHsx4cD0bn3r77E8O1qWHU8A1P9fTufgWXccYTGZi6fEXPSe197Ps1ul6I+mdI8DgYn1hs9xCh4/4E39B+degwwQ20Kw26LHGg4VRgCvBdc/aH8H2Vor6JHPqVzIuRGVMKIT2kdh1H+yDXzn4r+L3jXxUXinuzZWj8fZ7QmNSPRm+834nHtXgYThjMsdLnxC5I+f6L/hj9JzDxN4X4fpOjlq9tP+7t85v9Ln6Eq6uodGDKehByPzFfOn7Qdn4xhsNO8ReFdKOtxWfmx3lpFu+0Kj7SssYXJYAghgATyD618/fD3xz468P36WfhhZtRjkbL2BVpkbJ5IA5Q/wC0Me9ffGh32oajpcF7qli+m3Ui5ktndZGjP+8vHP5+tfIcd8DUcRhZ5djJqVOdtt9NVofV8G8Z0uJ8JJqjOlJb3T5f+3ZWs/TfyPzF0/w/8Sfif4hsF1vQ7nStCsbhJ5o5YZUEmw52/OAzs3TgYAJr9HfDGua/qczR39gLe3RPlkCtHgjooDdfw6V2mSeppK+Z4Y4XwmR4Z4bCbN3bPt8LhI0ItJ3b6hRRRX0h1Hwr+3J+zQnxt8BHxZ4Ytg3jDwxDJLbBB899ZjLy2h9WHLxf7WR/Ea/nkkjeJikgKspKsrDBBHBBB6EdxX9gtfhh/wAFA/2XrjwZ4rPxe8B6e76F4inP9p21tGziz1F+TIFQcR3HJ6YD5H8Qr4firJ3P/a6K1+0v1/zP6m8A/EmOHf8Aq5mdS0Hd0pN6J7uF+z3XnddT8xq6bwb4u1/wH4o0zxh4Wums9V0i5jurWZezoc7WHdWGVZTwVJFZ/wDYOu/9A28/8B5f/iaP7B1z/oHXn/gPL/8AE18RChXi1KMXdeTP6lxGZZXXpSoVq8JRkmmnKNmnutz+of8AZ/8AjZ4f+Pnw007x3opWK5YC31OzBy1pfIo82IjrtP3oz3Uj3r2uv5vP2RPjb4q/Z8+JUV7e2N/J4W1sx2mt2wglIWPd8l0i7f8AWQkk8clSy9xX9Hdpd21/aQX9lKs1vcxpNDIhyrxuAysD6EEGv1jJcweKw6dRWktH/n8z/PnxN4Np8P5vKlhKinQn70GmnZfyuz3j+KsyxRRRXrn50FFFFABRRRQB/9P93KKKKACiiigArivFGrbQdMt25ODMR6dl/qa39Z1NdMtDIMGV/ljU+vqfYV5O7tI7SOSzMSST1JNADaKKcqs7BEBLMcADqSaAL2mafJqV2tumcdXb+6o6n/CvW4IY7eFIIRtRAFA9hWXommDTLMK2DNJ80h9+w+grZoAKKKKACgkAZJwB1JorkfHXhaXxr4WvvDMWqXWj/bk8trqz2+aF/iX5h0YcNgg46EVrRjCVSMakrLq97fI58XUqwoznQhzTSdle130V+h80eOf2w/CvhTxg/h7StMfXLG1Jju72CZUxKDgrACCsgXoSSAT0r0rwf+0v8IfGOyGLWF0q6fA+z6mv2dsnsHJMZ/B6+JfiL+yR4t8FWFxrljrGm3+m2wLM1xILKVVHqJT5ZP0fmvkplxx1r9mwfB2Q5nhVLBVHdaOS7+af6H8s5l4ncY5DmEqea042k7qDSsl/dlF3t63P2n+Kz/Be58OHU/id/ZlxYsh8maQq078dLZ4z5pPpsNfkL44l8FTeILh/AEF9Bo+f3S6g6vKTzkjaOF9AxJ9TXKNLI6qruzLGCFBJIUHrgHpX0j8Jv2Y/G3xJhg1u/wAaJoMoEi3Uw3TTx+tvFnJB7M2F9M16+W5Zg+GqLq4rFNp7J7fKOt2fNZ7n2Z8c4qNDA4CKcdW4q8vWU3ay8vzPmqvs34HfspTePdKsfGnjDUPsui3i+bb2loc3M6BiMu54iUkHplj7V8ganarY6ld2SEstvPLEpPUiNyoJ9+K/ZX9nQ/8AFk/CP/Xif/Rr1lx9m+KweCpPCT5ed2b62t07HV4O8NYDM80rrMaXOqUbpPa97arqSan4g+EP7PfhtbTFro9uFzHZ2yh7u5Yd9uS8jHuznHqRXwR8Vf2sPGvjbztJ8LB/D2kPlf3Tf6ZMv+3KPuA/3U/76NeHeMxrvin4iaxBGLrVdRuNTuYokG+eZ9szKqKOTgAYAHAFeraz+zR4q8I/DHU/iH4ynSwntVhNvpiYkmPmyrHmdx8qYDZ2jJz1IrkyvIcoyydKeOqe0r1GrX11faOv3v8AA7c/4v4l4go4inldF0cJRTvy6K0e8tP/AAFHKfC+5uIYry7hleOdbhHEqsQ4bbncGBzn3r7X8C/tB6tpXl6d4wjbULUYUXSAC5QerDgSY/A/WviH4Z8WN9/11T/0GvrjUvgj4iHhuw8T+H2/tOG6tI7iW3AxPGXUMdo6OB7c+1dXE1PLqlT2WPSXM7J+fr0Pi+CsRxFQlVxeQuT9nZzitbp949fzPrW4tvAXxV0UMRBqduR8siHE0DH0P30b2P5GvlH4nfBq68EWza5p92LrSvMVMSfLPEXPyg44YdsjB9q5z4RT3+nfEnR7ZHltzLc+TcRZZNy7Wyki8Z57EV9SfH3/AJJzc/8AXzb/APodfD0IV8pzSjg6FVypzto+zf5+aP2PHVcFxbwpi85x2EUMTQ5lzLR3ik/W2uzvY+DK7HwTJ4Mj1dT43iupLHjH2ZsAN/00AG8r/unNZfhfSI9f8RadoksjRJfXCQM6gFlDnGQD1xXa+O/hL4m8DB7y4C3mmhsC8h6DJwBIh5Qn8R719xjcVhpT+o1anLKa01s/k+/kfheTZVmVOh/bmGw6qUqUrSulJJpX96Paz3Ptvw1N4GsNFW88LtYW+nYyZYGRF/4Gx5z67ua5DxD8b/AOgloo7ttSnHHl2a7xn3kOF/WvgXzHCGMMQjHJXJwT6kdKSKMyyJEpVS7BQWIVQTxyTwB7mvmaXA+GjN1MRVlJfd971/Q/TcV455pOhDD5fhoUna199fJaJfO59z+BPjjo3jDWX0W8tTpcsp/0NpJAwmPdGOAFf0HIPrmvcq+MPC37POu6lHDqGq6rb2cL4kT7IftEhHUFXUhAfcE19g6ZaS6fp9vYzXMt48EYjM82PMk28bn2gDNfFcQ0Mvp1l9QnddVrp6Nn7h4d47iLEYJ/2/Ss94yuryT7pdujL1FFFfPH6IFZ+raVYa5ptzpGpxCa1u42ilQ91b09COoPY1oUUAflr8RPA9/8P/E1xod3l4T+9tJyOJoGPyt/vDow7EVwtfpn8Wfh1b/EPwxJaRBU1OzzNYyn+/jmJj/dkHB9Dg9q/NO5trizuZbO7jaKeB2jkjYYZHU4ZSPUGgfMyDNfZv7OfxMM8K/D/XJv3sSl9MkY/eQctb59V6p7ZHYV8ZVasry6067hv7KRobi3kWWKRDhkdDlSD7GgLn69UV5r8LPiDa/EPwxFqWVTULbEN9CP4ZQPvgf3H6r+I7V6VQIKKKKACiiigD//1P3cooooAKKKKAPDPF/iSa11ya01C3kUxcRYI2mM/dZfr3965j/hK7X/AJ4SfmK9i8d+F18RaYZrdf8ATrUFoiOrr1aM/Xt7/WvmZ0ZCVYEEHBBGCCOoNAHb/wDCV2v/ADwk/MV82fEj9uv4ZfBLxkPDWp6LqOvahDAsswsZIFS2d/upIZDy+35sDoCM81mfHv4waf8ABrwHca+5SXVbrdbaVbMeZLll++w/uRj5m/Ad6/CfVdV1DXNTu9Z1ad7q9vpnuLiaQ5aSSQ7mY/U1EpW0QH7iD/gq98K8c+CPEP4TWZ/9npf+Hr/wp/6EnxD/AN/rP/4uvwqoqedgfu9af8FWfhDNdww3Xg/xDbQPIqyTF7V/KQnDOVV8sFHOBye1fpvous6V4j0ax8QaFdR3unalbx3VpcxHKSwyqGR1PoQa/jqr9ff+Cbn7UI0y8T9nrxxd4tbt2k8M3Mz8Rzt80mn5PRZOXhHZtyj7wpxn3A/auvFPjt8Wn+EHhCLXLWyW+vL25FpbRyPsjVyjOXfHJChegxn1r2uvKPi58ItC+MGh22ja1d3NkbKY3FvNbFSVkKFDvRwQwwemR9a9bKJ4WGMpyxqvTT1R4HFFHMquV16eUy5a7Xut6Wd+/pex+Rvjv4o+NviVqH27xbqMlyoOYrZDstof+ucQ4H1OW9TWx8N/gn4++KE4Ph6xMWnqcS6jcgx2qY6gNjLt/soCfXFfdnw//Y48F+GtQOp+Lr1/EjRybre3aPyLYAdDKgZjIfbdt9jX13BaW1naLZWUSQQRJsiiiUIiKBgBVXAA9gK/S808QaFCCw2T00kurVkvSP8AmfgnD/grjMVOWO4lrNyd3yp3k3/elr9y+8/AW7tzaXE1szBjDI8ZI4BKkjP6V+2/wX5+EXhD/sC2v/ouvhPwf+x3408T6lPqXjO6Tw/YSXEjiJcTXjoXJGFB2Jkf3iT/ALNfo74Z0Cy8KeHdN8M6c0j2ul20drC0pBcpGuAWIAGT3wK4OPs/weNjRo4afNKDbdttu57ng3wdmeV1MVisdS9nGpFKKfxb726fM/Krw1+zT8TfiFr99eCy/sXS3vbg/bdQBjDL5rcxQ/6x+OhwF96/UD4e+EI/APgvSPB8Ny14ulW4g891CGQ7ixO0E45PAyeK7HrRXyeecTYzNOWNdpRjsl/V2fpHCfAOWcP+0nhE3OfxSk9Xre1tkjgfBvww8EeBLi7vvDumpHfX80s9xeS/vLmRpXLsPMblVyeFXArwr9rDx/4RsvhvqfgqTUYn1q/Nv5VnEd8ihJkkLSBfuDaDjdjPauX/AGtfjD408CXGmeFPClyNPTU7SSe4uox/pGA+wJGx4QdyQM+hFfmzJ9u1B7i9k865cfvLiZt0hG443yPz1Jxlj1r7XhLhKpiJUs4xtbqnFdXZ6Xb81sj8k8SfEalg4YnhnKsNaycZu1kk1ryxXk939x6x8NObK/8A+uqf+g1+rvwr8U6BrnhLS7DTbyOS6srSKGeAnbKjRqFOVPJGehHFflF8M/8Ajyvv+uyf+g163bz6jo93Fd20k1lcx7ZI5FLRuAeVZTwcH8jX0XFeSwzJ+zc+WSbaPyfw+42r8N4mpiIUfaU5pKS2aXSz2v67n6TX/g3w3qOt2fiOezRdTsZBJHcx/I5IBGHx98c9/wA6qePvCC+OPDU/h/7R9laR0kSXbvAaM5AK5HB74Oa4f4I+ONc8aaHe/wBvMk0+nzRxLMq7WkVkzlwOMjHUAZr2uvxnFLE4LF8kp+/Tej3t10P7Byv+zM8yn29OlaliVeStZu+jvbrpvc+INF+FXjLwb4+0Oa/tDcWaahCftdtmSIDd1b+JP+BAV9DfHA4+Guqn3g/9HJXrNc74r8NWXi/Qbrw/qDyRwXQXLxEB1KMGUjII6gcV3zz6picbh8Vil8DV7dUnc8CnwDQy3JMwyvKm37dSspPZuNrX7ep+a2jabJrOq2ekQuI5L2aOBHb7qtIwUE45xzW94s8C+JvBd0bfXbRo4y2I7hPngk/3XAxn2OD7V7XD8CvE/hfxfpGp6dJHqenQX0EjuuI5o0VwSXjY4OB1Kk/Svrq9s7PUbeSyv4I7m3lGHilUOjD3BFfYZlxlGjiKcsM1Om1quqdz8c4Z8GauNwGJpZkpUMRCXuveLVvxV+qZ+c3g74j+KfBEo/se5L2xOXtJsvA3rhf4T7qRX3j4E8WR+NvDNt4hSA2xmLo8W7dteM7Tg8ZB6ivI9f8A2cvD2oait3ot9Lplu7Zlt9vnKP8ArkWIK/Q5Ar2Pwb4S07wToaaFpck0sKu0peZgzF3+8eAABx0FeBxLmeW42lCrh42qX10tp2fc/QfDLhfibJcVVw+ZVE8MlaK5r63VnFbpWvpp6HU1l65rek+GtGvvEOu3Udlpum28l1d3Mp2pFDEpZ3Y+gA/HtWpX4n/8FJP2of7Wv3/Z68D3ebKydJPEtzC3E1wvzR2AI6rFw8o7vhf4TXxcnZH7SeyXP/BVv4QRXcsNr4P8Q3EKOyxzb7RBIoJCuEZ8qGHODyO9Rf8AD174T9/BXiL/AL+2f/xyvwoorPnYH7sN/wAFXvhKBx4K8RZ/662f/wAcrw3xZ+2F8K/i74u+3eHfD2q6JeXERNwt01uyXEi9GTy24fb97PXGeua/JmrFrdT2c8dzbOY5YmDo46qy8g0c76gfqp/ws7Rv+fW5/wDHP8aP+FnaN/z63P8A45/jXzL4P8TQeKdHjvVwtxHiO5jH8MgHUezdRXWxxySyLFEpd3YKqqMszMcAADqSeAK1QH3L+zh8SdWvvijp2k+ErG6m+2ZTUEbb5S2Y5klkIPGzgqcZ3YA61+qlfMn7MHwTj+E3gtdQ1eEf8JJriJNfMR81vERujtQf9nOX9X+gr6boAKKKKACiiigD/9X93KKKKACiiigAr55+MGk2Phqyu/HErLb6bbxvPqD9oggLGXA7ED8/rX0NTXRJUMcqh0YYKsAQR6EGgD+Uv48/FTXPjN49ufEEkM8emW2bbS7Uo37q2U8MR03yH5nP4dAK8X+w3v8Az7y/9+2/wr+xAaXpa/dsrYfSFP8ACn/2fp//AD6wf9+k/wAKhwuB/HZ9hvf+eEv/AH7b/Cj7De/88Jf+/bf4V/Yn/Z+n/wDPrB/36T/Cj+z9P/59YP8Av0n+FHs13A/js+w3n/PCX/vhv8KntBq+nXcGoWK3Nvc2sqTQzRK6PHJGwZHRgMhlIBBHQ1/YX/Z+n/8APrB/36T/AAoOn6e3DWsB+sSH+lL2fmB8n/sa/tGp+0F8MI5dcPk+LtAEdnrUJUp5xxiK8QH+GYAlsfdcMOmK+vKghtbW2z9mhjiz18tFXP1wBU9aIAooooAKKKKACiiigD5u+L37P0fxh8a6NrGq6mbLSdNs2hnigXNzM7S79qsRtRcdW5PoK5746eBPCXw//Z61/SPCWmw2EA+yb2UZllIuY/mllPzOfqfpX1lWXrWi6T4i0u50TXLWO9sbtDHNBKNyOp9fcHkEcg8ivcwee4inVw3tZt06TTUemjv958dm3BuCr4bHfVqcY1sRGSc2ru7Vt+i8kfjT8NP+PG//AOuqf+g1+qem+CfDXjP4f6Db67ZrKw0238udflmjzGOUcc/gcj2ry3wj+yp4X8L+Jr2+N7Ld6HLIk1vYSD94rDrHLL/HGO2ACRwff6miiht4kgt0WKKNQiIgAVVUYAAHQAV9FxdxNRxtWnLBNrl1vtutvkfnnhf4bYrKoYv+2YRlGpaPL8V0m9fn06nmnw2+Hb/DxNUtFuxd295PHLAxXbIqqpUq46Z9x19q9Ooor4jE4mpXqOtVd5Pdn7NluW4fAYaGEwkeWEdl21uFFFFYHcFFFFABRRRQB8d/toftK2/7PXwzkGiyLJ4w8QrJa6LD94wcYlvXH92EH5c/ekKjpmv5pbue+v7ue/vnluLm5keaaaUszySSEs7ux5LMSSSe9f2IXml6VqO06jY212U4UzwpKVB7DeDiqS+GfDC/d0bTh/26Q/8AxFS43A/j28qT+63/AHyaBDMTgRufopr+wv8A4Rvw5/0CLD/wFh/+Jpy+H9AQhk0uxUjoRbQgj8lpezXcD+PT7Nc/88ZP++G/wo+zXP8Azxk/74av7Ev7I0j/AJ8LX/vxH/8AE0f2RpP/AD42v/fiP/Cj2a7gfyNeDdev/C+rpeCGVreTEdxHsb5oyeo916iv2n/Yu+CkfirUIvi74gg36RYMDo8cinFzdDB+0YYcpF/D6v8A7tfp7/Y+jnrYWv8A34j/APiavRxRQxrFCixoowqIAqgewHApxVgH0UUVQBRRRQAUUUUAf//W/dyiiigAooooAKK/KH/go58efi78HfFHgix+GfiW60CDUtPvJrtLZYmEskc6qjN5iP0BI4r83x+3F+1aOP8AhYmon6w2Z/8AaFAH9P1FfzA/8NxftWn/AJqJqP8A35tP/jNH/Dcf7Vv/AEUTUf8Avzaf/GaAP6fqK/mFT9uf9q5P+ahXzf71vZH+cFereAP+ClX7RXhfVLeTxddWPizTFZftFvdWkVvO0efm8ue2Ee18dCysM9RQB/RJRXhfiv4mR67+zjrPxa8CXT24u/Cd1rOmT4XzIXNo0sZIII3xsMEEEZFfz4x/twftWbQ3/CxdSPAPMVqf/aNAH9QVFfzBf8Nx/tW/9FE1D/vxZ/8Axij/AIbj/au/6KJqH/fiz/8AjFAH9PtFfzBj9uT9q4f81E1A/wDbCz/+MVctf28f2sLSZZh49uZtpzsms7GRD9QYKAP6cKK/Jn9i/wDb08Z/Ffx/bfCf4uQWUt7qkUp0vVbOL7MzzwoZDBcRKShLorFGQLyMEc8fpP8AE3wt4k8YeDr3RvB/iS68Ka0y+ZZalahHMcyg7VlSRWDxN0cDBxyDkVM5NRbirvsb4WlCrWhTqT5E2k5O7S83bX7jv8GivwEvPjj+2L8OPjdo3w0+JPi7U4Jv7bsLeaNktzBd2s1yiGSFxEN8Uik4Yc9QcEcftD8d/i7ovwK+GOufErW4Tcx6YipbWqsFa5upm8uCEMem5j8xwcKCe1efl2ZRxanywcXF2aZ9fxnwTW4eeG9piIVY1o88ZQu1a9uqR61T/Lc9FP5V/Mv8QP29P2m/Hl/NPF4rl8N2UjEx2Ohotqka54Uy4MzkDqWfn0rxK5+PfxxvHaW6+IHiaR36k6rdD9BIBXpHxJ/Wr5cn91vyNHlyf3T+Rr+R0/Gv4yHr468Sf+DW7/8AjlWIvjr8bISDF4+8SrjpjVbv/wCOUAf1r4x1or+XLwt+2f8AtPeEbmO4sPiBqt4kZH7jU2W/hYDsyXCscHvgg+9ft1+xf+1Y37S3hPUoPEVpBp/ivw80Q1CK2yLe5gmyIrqFGJKAlSrpkhTjBwRQB9p0V+Mf7f8A+0r8cfhL8cLXwt8OvFd1omlPoNndtbQR27q08skwdyZY3bJCgdccV8Q/8NzftXYwPiHf/wDgPZf/ABigD+nqivj/APYu/aOX9ob4Vx3etzR/8JdoDLZa3GoCGViMw3ioMALMoOcDAcMBxivsCgAoor82f+CgH7WWtfBXTNL+Hfwy1EWPjDVtt5dXcaxyPYWCkhMLIGUSTsCBleEVj3FAH6TUV/ML/wANzftXf9FDv/8AwHsv/jFfqL/wTk+OfxW+NFr47PxP8QTa8dJk0wWRmigjMPni480AwxpkNsXrnpxQB+mtFFVb29s9MsrjUtRmS3tLSJ555pCFSOKJS7uxPQKoJNAFqiv5zfi//wAFAfjx4i+I+t6j8OPFVzoPhcXTxaVZwQW5/wBGiOxJXMkTMXlA3tk8ZwAMV5v/AMNzftXYx/wsK+/8B7L/AOMUAf09UV+a3/BPr9qzxD8adM1j4f8AxN1P+0fFmkE39rdyLHHJeae5CspEaqpeByAcLyrD0NfpTQAUUUUAFFFFABRRRQB//9f93KKKKACiiigD8Rf+CtH/ACOXw7/7BWof+lKV8D/sweAfDfxQ+PXg7wF4vikn0fWL2SG7jikaJ2RbeSQASLyvzKORX3v/AMFaP+Rz+Hf/AGCb/wD9KUr83Pgz8S7r4O/E/wAP/EyzsY9Tm0G5a4W0lkMSS7o3jKl1DFeGzkA0Afvp/wAO4f2U/wDoA6l/4Nbn/GkP/BOD9lM/8wHUx/3Fbn/Gvjn/AIe0eJf+ic6f/wCDOb/41S/8PaPEn/ROLD/wZzf/ABmgD6b8a/8ABPD9mDRfBmv6zp+j6ml1p+l3t1AzanOwWWC3eRCVPBAZRwetfzzKcqCe4r9ZPEf/AAVR8ReIfDuq+H2+HtjCuqWVzZGUalMxjFxE0RcAwjO3dnHevycAwAPSgD+g34BajNqX/BN66abrbeFvEVquefkge5Vf0r+fFPuL9BX9DXwQ0WfRP+CcMsNwhje78Ia7fAMMHbdfaJUP4qQa/nlT7i/QUAfuH+yx+w/+z18UfgH4R8feMtJv7rWNYtppbqWLUJ4UZkuJI12xocKAqgcV9Bf8O4v2Uj/zANS/8Gtz/jX5w/BH/govr3wX+F2hfDK18E2eqxaHFJEl3LfyxPKJJXlyUWJgMb8cE9K9W/4e0eJe/wAOLD/wZzf/ABmgD7HP/BOH9lM/8wLUx/3Fbn/Gvzt/4KAfsy/CX9n/AEnwZe/DOxu7OTWrm/iu/tN3JchlgSJo9ok+7guc4616X/w9o8S9vhzp/wD4M5v/AIzXyb+1R+1/qn7UFh4dsNR8NW+gDw/NdTI0F09wZjcqikEOibduztnOaAPO/wBk27ksv2l/hpPESG/4SOyTj0kbYw/EEiv3u/a2/alP7L2jeHdWHhweIv7eu7i18v7X9k8n7PGsm7PlSbs7sYwMV+Pv7AHwN8WfEb43aF49htHj8M+Db1b++v3GI2uIlLQWsZ/ikZyrEDooJPbP2R/wVo/5FD4c++qakf8AyXioA8Y8XftueDP2jvE/gzw74j+GIstUt/EOlnTNXi1UNcWcjXkWRj7MN8TfxxkgHqCCAa+uP+Cpkt1H+z1p0UJIhl8T2gmx0IWGcpn/AIFX4bfCU4+K3gs+niLSv/SyKv6dv2l/grbftAfCTWvhxJcrZXdw0d3p104LJDe2zFoWcDnY2Sj452sSOaiNOMZOSWr3OmrjK9WlTo1JtxhflT6X1du13qfyv+Ho7WbxBpcV8FNs99bLOHOEMTSqH3E9Btzn2r+k5Pgt+wo6rt0T4fk4H/L1Zen/AF2r8QPGP7FX7Tngu9mtLzwJqOpRRMQLrSQt9byDOAytES2D6MoPqK82k/Z6+OkJxJ8O/EwP/YJuj/JKs5j+g0fBH9hjtoXw/wD/AAJsv/jtOX4H/sOTMI49A8AMx6BLmzJ/Sav56z8AfjeP+ae+Jf8AwU3f/wAbpp+AnxtTk/D3xKP+4Td//G6AP1U+L3/BOTQviV8Qb7xH8IvFvhnw3oVzFbrbaPbxtMImjiVJGBhcj52Bbj1r3X9jz9i3xb+zL431zxRrniiw1m31bSxp4trOCeJldZ0lEjGXjACkYHPNfgLq2i+MPAmrCw1yy1Lw9qaIsohuI5rO5VGztcK21wDg4PQ1+xP/AATU/aR8c+M9a1b4M+PNTn1qO1086npF3eO0tzEsMixz2zStlnjw6sm4kqQRnB4APm//AIKi/wDJyFl/2LNh/wCjp6/ORIpJAxjRmCLuYqCdq5AycdBkgZPrX6Of8FRv+Tj7L/sWbD/0dPXC/wDBPjwloHjv463/AIO8UWqXml6v4V1i0uoXGcxyiJSRnoy9VPUEA9qAPJP2XPjvqX7PXxb03xrEXk0i4IsdbtVP+vsJWG8gd3iOJI/cY6E1/UlpOq6Zr2lWWuaNcJeWGowR3VrcRnKSwyqHR1PoQQa/lB+O3wg134GfFDWvhzrgZvsExeyuSMLdWMuWt519dy8NjowYdq/Vb/gmX+0edV02b9nrxZdbrvT0kvPDkkrcyW2d09kCepiJMkY/uFh0UUAfpt8VfiV4d+EHw+1r4i+KZNlho1s0xQEB55T8sMEeeryuQqj3z0Ffyn/E34ieIviv471r4heKpjLqOtXT3DjJKxJ0igjz0SJAEUegr75/4KP/ALRw+I3jtPg/4Vut/h3wjO32942yl3qwBV+nDJbAlF/2y59K8L/Ys/Z3m/aB+Ltra6rAx8K+HjHqGtyYwsiK37m0Df3p3GCOuwMe1AHyHJHJC5jlVkcYyrAgjPIyD7V+zf8AwST/AOPT4m/9dNG/9Bu6/OX9rG3t7T9pT4j2trGkMMOv3SRxxgKiIpAVVA4AA4Ar9F/+CSn+o+Jv+/o38rugD9ka/MX/AIKW/H4+Bvh5b/Bzw7c7Nb8YIX1ExnDwaSjYZTjkG4cbB6or+tfo14r8UaL4J8M6p4v8R3C2ul6PaS3t3MxwFihUs2PUnGFHckCv5Svjf8V9a+NnxP134ka4zB9UuD9mgJyLazj+W3gX0CIBn1bJ70AcD4d8P6t4r1/TvDGgW7XWpardRWdpCgyXmmYIg+mTyew5r9D/ANsz9i6z+BPw58G+N/CAe5itbaHSvE8gLMG1BwXW9Gc7UkYtFjgDCdzW7/wTV+H/AIFi8V6l8aPH2t6Tp50Umw0S1v7y3gkN3KgM90I5XBxHG2xGx95iRytfsB4/1j4K/EnwRrXgPxR4q0CXS9ds5LOf/iZ2eVEg+WRMycPG2HU9iBQB/MR8G/ihrnwa+JWhfEfQGb7Ro90sksQOBcWzfLcW7f7MkZK/XB7V/Vx4M8XaH4+8J6R418NTi40vWrSK9tZB/wA85Vztb0ZTlWHYgiv5KPH/AIRl8BeNtb8Gy3lvqB0e9ltVu7SRZYLiNG/dzRuhKlXTDcHjOO1frV/wS++PoK6h+z94jueR5uqeHjI3brd2i59P9cg/36AP2TooooAKKKKACiiigD//0P3cooooAKKKKAPxE/4K0f8AI5/Dv/sE3/8A6UpX5rfCH4bah8X/AIk6D8NdKvIdPu9euTbRXNwrNFERG0m51T5iMKRxX7pftv8A7I3xC/aV1/wrq3gnUtKsYtDsrm2uF1F5kZmmlWRSnlRvkADBzivAv2eP+CePxf8AhL8afCnxH8Q63oFxp2g3rXNxFay3DTOpidAEDwqucsOpFAHBf8OnPiV/0Pug/wDgLd/4Uf8ADpz4k/8AQ+6D/wCAt5/hX7mUUAfhvH/wSa+IhcCXx/oar3K2l2T+Rx/OvWPAP/BKLwvp2pQX3xH8aXGs2sThnsNNtRZpMAc7HnkeRwp6HaoOOhFfrhRQB4p8adL07Q/2ePG2i6Rbx2ljYeEtRtra3iG1IoYrN0RFHYKoAFfyeJ9xfoK/r0+J/hi+8bfDfxT4O0ySOG71vSL3T4JJiRGklxC0aM5UE7QSM4BOK/EFf+CVfx7CgHxB4Y4H/Pe6/wDjFAHM/Bj/AIJ2+OvjR8M9E+Juk+L9H0201yKSWO1uYLl5YxHK8RDNGNpyUzx2r1If8EnPiT38e6D/AOAt5/hX6tfs2/DLW/g58E/DHw28R3FtdalosE0U8toWaBmknklGwuqsRhwOQOa9yoA/DM/8EnPiT28e6D/4C3n+FfLf7Tn7IPij9mHT9A1HxD4g0/W01+e4giWyimjMRt0RyW83qDv4xX9OFfC37b/7MPjj9pbR/Cdh4J1DTbGTQrq8muP7ReVA63EcarsMSPyChznFAH5A/sKfErxD4B/aP8J6dpt7LFpnia9XSNStN58meO5BSNnT7paOTaytjI5HQmvvT/grR/yKPw5Hpqmpf+k8VcL8G/8Agm98aPh58V/CXjrV9d8PS2Og6va39wlvLctM0cEgdljDQqNxAwMkCvsH9ub9mjx7+0noXhTTvAd1ptrLod7d3Fx/aUskSslxEiLsMccmSCpzkCgD+f8A+E3/ACVXwX/2MWlf+lkVfv8Af8FBPi78Vvgr8NdC8W/CzVBpUs2t/Yr+U20NzuikgkeNcTI6r86dQAe1fCPgb/gmd8fPDfjfw94i1DVPDRtdK1WyvphHd3DOY7a4SVwoNuAWKqcAkc1+zHxa+F3hL4z+BdV+HvjOBpdM1RR88ZCzQSo26KeFiCBIjcjjB5B4JoA/ALwz/wAFDf2mbXxFpdx4i8WfatJivIHv4Y9OsQ8lqsgMyKREp3MmQMEc96/SP/h6T+ztn/kH+J1H/XnAf/bivjbxz/wSv+L+lXsz+APEGj6/YbiYVvGksLrb2DqVeIn1IcCvIbr/AIJy/tWWxITw7YXHvFqtpg/99OpoA/Sn/h6P+zp/z5eJ/wDwCh/+SKQ/8FSP2de1j4nP/blD/wDJFfmJ/wAO9f2sf+hPiP8A3E9P/wDj1Xbf/gnV+1fPjd4Ys4f+umq2Qx/3zIaAOL/bK+NvhL4//GZvH/guK9h006VZWIW/jWKbzLfzN52ozjHzDBzXtf8AwS/sLq6/aRuL2FWMNl4cv2nYdAJZIY0BPux4+lSeHP8Agl/+0Vqtyqa7daBocGRukkvGunA9QkCEH6FhX6z/ALLf7KfhD9mTw/eW+m3b6zr+seX/AGlqssYi3rHkpBBGCdkSkk4LEseSegAB+TP/AAVFOf2kbMenhmw/9Gz1mf8ABMggftOxj18PamP/AEVX27+2R+xD8TP2hvizB498H6vo1lZR6Ra6e0WoPOkvmQPIzMPLjddpDjHOapfsgfsMfFD4AfGGP4h+LdY0W8sE0y8svJsHneYyXGzacSRIu0bTnmgD0/8A4KDfs5/8Li+GB8ceGrXzfFfg2KS5jEa5kvNO+/c23HLMmPNjHqGA+9X89uga/rfhbWbPxF4cvZ9N1OwkE1rd2zmOaGQcBkYcg4JFf2K8dCAR3B5Br8YPjd/wTH8X+JfiXrXiX4Tatoun+HtVmN5FY37zRyWs03zTRII43UxBySnOQDjHFAH5CWNlqviLV4NOsIpb/UtTuVihjXLyz3E74UDqWZ3b8zX9RX7K3wEsP2efhHpvhDaj63eAX+uXKgZlvpVG5A3UpCMRp9Ce5r5C/ZI/4J+a18GfiQPiR8U7/S9XuNKiJ0a2sDLIkV0+Va5lMqJzGuRGADhju7Cv1NoA/ld/a5/5Oc+Jn/YxXf8AMV+h/wDwSTP7v4mj/a0b+V1VP45/8E5PjF8TPjB4u+IGha94fhsPEGqz39vFcyXKzJHKchZAsTLuHfBIr6i/Yn/ZX+If7M1p40bxVqGk6lca+tkbJLJ5iivaLPxM0kakKxkUfKCcZoA+eP8Agp/8fTaWen/s/eHLjEt2ItT8QNG3IhBzaWjY/vsPNcegT1r8a9G0TWfEepQ6N4fsLnU9QuSRDa2cTzzyEDcQkcYLNgAk4HSv1Q8f/wDBOL9pf4jeNNZ8c+JfFHhm51PW7uS7uHM92FBc/KiAwcIi4RR2UAV9WfsX/sQ6p+zx4l1Xx58QL7TtV16W3Flpf2AyPFaQyc3EhaVEPmPgIMDhc880AfiIfgP8bT1+H3ic/wDcIvP/AI3QfgL8bR1+Hvib/wAE95/8ar+tne/94/nRvf8AvH86AP5FdW+EPxX8P6dPq+ueC9f06wtV3z3N1pl1DDEmcbnkeMKoz3JArD8E+MNd+H3i7SPG3hmc2+qaJdxXls4PG+Js7W9VYZVh3UkV/Xhr+i6Z4o0PUPDeuwrd6dqltLZ3UD8rJDMhR1IPsePQ81+Geu/8Eqvi8us3w8N+JPD8mlfaJfsRupLlJ/s5Y+UJQsLKHC4DYJGaAP2W+D/xO0P4yfDbQviP4eYfZtYtVkkiBBNvcr8s9u3o0cgK/TB716VXwX+xR+zz8a/2cbbXfCvjrVtH1PwzqLLeWcVjNO81tfDCSECSNF8uVAN2D95QccmvvSgAooooAKKKKAP/0f3cooooAKKKKACivzV/bj+O37R3wl8ZeGtL+CltPNp99pktxetFpB1Eees5RQXCNs+XHy8etfD4/bN/b3PSwvf/AAmG/wDjVAH9BVFfz7j9s39vj/nwvf8AwmG/+NUf8Nmft8f8+N9/4TDf/GqAP6CKK/n3/wCGzP2+O1he/wDhLt/8ao/4bN/b47WF4f8AuWG/+NUAf0EUV/Pv/wANm/t899PvP/CYf/41R/w2b+3x/wA+F5/4TDf/ABqgD+giiv59v+Gz/wBvf/nwvP8AwmG/+NUf8Nnft8f8+F7/AOEw3/xqgD+gmiv59/8Ahs39vj/nwvP/AAmG/wDjVH/DZv7fH/Phef8AhMN/8aoA/oIor+fb/hs79vj/AJ8Lz/wmG/8AjVH/AA2b+3x/z43n/hMN/wDGqAP6CaK/n2/4bN/b4/58L3/wmG/+NUf8Nnft8D/lwvP/AAmG/wDjVAH9BNFfz6/8Nn/t7f8APjef+Ew3/wAaoH7Z/wC3ueljeH/uWG/+NUAf0FUV/Pv/AMNn/t7/APQPvD/3K7//ABql/wCGzv2+P+gdef8AhLv/APGqAP6B6K/n4/4bO/b5/wCgde/+Eu//AMao/wCGzv2+f+gde/8AhLv/APGqAP6B6K/n3P7Z37fA66fef+Eu/wD8aq5b/thft1SIXktb8ueo/wCEbYBfYDya4MwzCGEgpzi3fsrn13CHB+I4hxFTD4evTpuCvepLlT1tZaPU/fyivwK/4a+/bo/587/8fDjf/GaB+1/+3P8A8+V9/wCE43/xqvK/1nof8+p/+A/8E/QP+IF5n/0MMN/4Mf8A8ifvrRX4E/8ADX/7dHezvv8AwnG/+NUo/a//AG5+9lff+E43/wAap/6zUP8An1P/AMB/4ILwMzP/AKGGG/8ABj/+RP31or8Ch+1/+3P3sr7/AMJxv/jVJ/w1/wDt0f8APnf/APhON/8AGqP9ZqH/AD5n/wCA/wDBD/iBmZ/9DDDf+DH/APIn77UV+BP/AA1/+3P/AM+V9/4Tjf8Axqj/AIa//bo/58r7/wAJxv8A41S/1nof8+Z/+A/8Ef8AxAzM/wDoYYb/AMGf/an77UV+BP8Aw1/+3R/z53//AITjf/GqP+Gv/wBuf/nyvv8AwnG/+NUf6z0f+fM//Af+CL/iBmZ/9DDDf+DH/wDIn77UV+BP/DX/AO3R2s7/AP8ACcb/AONUn/DYH7c3/Pnff+E43/xmj/Wah/z6n/4D/wAEP+IGZn/0MMN/4Mf/AMifvvRX41fAD9pr9rzxf8ZvCXhjx1a3iaBqWoLBqDSaE1sghKMSTN5a7OQOc1+ytetgMfHF03UhFpJ21Vj874t4Tr8P4uOExFaFRyjzXpy5lu1Zuy10Ciiiu4+VCiiigD//0v3cooooAKKKKAFDMvQ4pdzep/Om0UAO3N6n86Nzep/OuX8ZeLtE8B+F9S8X+IpTFp+lwGaXYN0khyFSGJOryyuVjjQcs7ADrXx/rPj/AOIMU3h6X4g/ESXwHqPjC6Nvpug6ZpthMtq7/NHbTXV1Bcs8iBkjknYpEZmVFA3IC0hN2Pujc3qfzo3N6n868L+FXjvXrrWtV+Gnj65S58RaTGt9ZXyxLbjVtJlbYtz5afIs8EuYblY8KGKOAqyAD2+RtiM4GdoJx64GcUNDJdzep/Ojc3qfzr4n8A+IPjh418DaN47i8ex2t3rdkmpLp8ui2UtjC82XW3JUJcGFRhSfN8zHO7Ne1eBfjJa6zqsPgnx7Zjwv4wdT5Vo777HVAg+abSbpsCZcctCwWeMffTGGI0JNHt29vU/nRub1P502vmr4neJfiDJ8WdJ8A+E/EP8AwjtjJ4autammisba8lmnjvorVUb7UrKqKjk4UAlupxxSGfS+5vU/nRub1P518IX/AMYfiJo/g2wj1zxdaaWrePtV8NXXii8tLOPy9PsLSaWJpUkC2kcstxGIQxUArgAbzmoT8ZLNAd/7ROhjAz9zw8f5CmkJux967m9T+dG5vU/nXx7quveOND0JfFGs/GKGx0d1jdb+503Ro7Vlmx5TLMyBCHyNmD82eM1xK/GSBz8v7Reg8+sPh8fzo5WLmR98bm9T+dMkuEt4nnnkEUUal3d2CqqqMszMeAAOSTwBXh/wI8faj4z+G1x4n8Tata6kllqus2iazCkcFtd2Gn3csUV5+7PlBTGmWdDsOCRxXgXjX4sat4j8Jan8QfEnixvBHw6v5fsOmW8Wl215dajYXJ8hLu7+1xXB23eWkSFIhst8O5+9tEht2Pd4/jdf6p4hsNJ8MeHJdUtdSuAltP8AalhmlslcLLqQt2jOy0XkxySOhl42AllB96Lt6mvkf4RX6/DTxhbeA9XnttQ0zxdbibQdfW2traee6tozI+m3TWqpFITBme0dVXcqyqQSoLfWtDQ7jtzep/Ojc3qfzr5T1bxJ8TfEfxH8aaLo3i3/AIR3SvDFzYWVvBb6bZ3LSfaNOhvJJZZbpXbO6UqAMKFA75NeRj45aW4EkX7Qts6tyGTTNKZSPUEWxBHuDQkK6P0I3N6n86Nzep/Ovz9T44WjMEj/AGg9NTPe50zSkX8WeKNR+Yr1rT/if8QPBN5pN349v9K8U+EtXurWyOt6dbfYLqwkvpFitZ54llmguLV5HRGkjMbJuDbWTJVWFzH1Rub1P50F2Pc/nXwInxt1a91HXT4k+MGkeDLqz13VrBdEuIdHjltLeyvpba28wXuZy0kKJIWbht2V+Uiun8OeOfEHjG6lsPCPxvsdauoI/Olh0+y0O6kSPIXeyRKxC5IGemTimkPnsfam5vU/nRub1P518M6z8T7zw9qc+ia78fNJ03ULUhZ7W7tNCimiZgGAeNwGUkEHBHQiodA+NOsN488GaNoXxX0jx4mua5Hpt9pVtBpRmWze1uJpLlTYnzU8lokJY/Lg4bqKGh+0Puzc3qfzo3N6n86+FNf8bfFyXTPib4z0/wAcT6VF4T1PxBb22mJpmnz2qw6OhktwHli84mRQvmkyHJJC7eMfU2o/EDSvCPw907xp44mW2e4s7IyQ2qNLJcX11EpW1s4Bl5ZZJCVijXJPfgEgsCl1PRdzep/Ojc3qfzr458XfFT4jCw/tzxHrej/CnQp3EdtHPHFqmuTM33ULSN9ljmI/5YwxXLA8bzXnY13VtTU3i+JfjRqSnpc2eiz2sB/2kjj0yIEH/dIoSDnP0J3N6n86Xc3qfzr4M8O/EDxC+sW3h3wt8U9Sg1q4bbb6J4+0NUnuWH8MSvBptzJnuYpHI9K+rPhP41vviD4B03xRqtnHYX8z3dreW8LM8SXNhdy2c3lFwG2M8LMob5gCAeaGrBz3PR9zep/Ojc3qfzryj4sfEC88FaTZad4bghvvFXiK5+waJaTE+V5gG+e7uQpDfZrSLMspBBPyxg7nWvnYeJvHV74zv/AmnfGG4fxfp1imovpraNpq2O18bBIog8xowWQyRJc+aiOjFhuVirBzan3Bub1P50bm9T+deZ/Cn4gp8RvCaardW62Gs2E8mma5pwJJstTtcLPECeTG2RLC5+/E6N3r0qgfMxdzeppKKKBBRRRQAUUUUAf/0/3cooooAKKKKACjrwKK8D/aI8Z+I/CXgy2s/DUV7BL4gvP7LudZsrO4vm0W1kid5r0Q2scshl2r5duSuxZWVnO0YIB574r8QW/xQ8b3F9Kxk8CfDi5lk+RGkXVPEForebMqrkyw6aNyRhQd90WIGYVryHwl4x+D3xD0fxJ4o+KU+otdeM7E6XY2VvpGqyyaJogfzbdFljtWVL15gt1O6n5ZFiQE+SCfRfA1v4s8Tw23hf4J29v4d8I+HbCOAar4j0jUG+13JbC29pbyS2Ur7EBkuLlyQzuAMtvI9B/4V9+0GOnjDwgfr4f1Ef8AuUqn2IV27ng/hLxJr3xC8P8A9raBMbnx/wDDHUTFa6i9vPZ22uRGMEo3nxxlYtStsJcRkfuLgBv+WaE/b/gvxpo3xB8IWfi7Qi4tb+F90Mw2z208ZMc9rcJ/BNBIrRyKejKa8D17wh+0PoOi3Ov2et+HfENzpyfaP7Gs9FurWbUI42DSwQXMuoyiOZk3eUShUvtDcEmuL+Hvj1LT4uRQeCNJ199I8b+b/benXmialYJp2pw27PHqfm3MEcKecsYt7td/zP5Ui5Icsm7jimjzS3tri8/ZP8C2VrqF7pUl0fCdv9s0+YwXUKTavaRu0UgBw21iOQVPQgjIr0zxzp+r+D9Ol8N/Hmwi8TeDzKPs/i60gKfZGQ/upNWt4fnsZkPIv7YiEH5j5B4rybQdVuJfhH4F+GC6F4jHiLStQ8MRXdrJoOpxwpJp2rW092jXTQC3CxpG58zzNhAyGwRX6cyhHMiOA6PuVgRkMp4IIPUEdQabYcuh8k6B8QPGPwvtIJNenuvH3gR40e21q1Au9a0+BuVe6SHjUbZVwftEI88Ly6S8vUWseItB8V/Hnw9r/hnULfVNNvPAF7JBd2kiywyI2r23KupI6ggjqCMEA1u698Fta8E3M3iL4EyQWcUjma88IXjmPR7oklnfT3AJ064bn7gNu5+/GpJceJaRqPw08OeOr3x8PB/i7w54mvLKTT9VsU8P6pLAWadZ3kcWcE1rJKXTP2iCQiRTli3GErbg7n0F8AoLW/8AD/jeyv4IrmAeOtfUxTIsiEebG+Crgg8tnpXqXiTRPDmm+F9ZubfSbCLydOu5PktYV+5A7dl9q8s/Zt+0T+G/FmryWd5aWureMdX1CxN9azWck1rMsGyYQ3CpKqllZRuQZKnHGCfZfGNjean4P17TdOTzLu80q+t7dMgbpZbd0jXJ4GWIGTSKPhrR7WMfCX4DWs6K6Lq/glSjAFSDbrwQeO9feT6BoMgxLpdk4P8Aetom/mtfAvhzV7nXdF+EvgSw8P8AiOHV9A1jww+pR3eh6jawWiaXGFvGkupoVgCx7TyJCG425yK+zvir4u1jwJ8PtZ8VeHtJm1vUrKFPstnDFLNuklkWISSRwK8rRQ7/ADZRGrP5attBOKbdyYqyPH/ixfr468QRfArw/th0S0jhvfGEtviNFs3O+10VNmAr3pG+4UfdtgQcectePaF8Svht4i+JV9r3jaS7i0bwXNdaRoWijR9RufPvdptr7U544bZ02BC1tZp/zzMsmMSJi58P7rxBqaWnhD4U+ffaxf3NxqvirxZ4h0XUbeyFxIu6WVopvsjTTzSlIoIElxDCvJ2xqG9iPw8/aCHK+MPCDfXw/qA/lqhoegtbnzt4Sm8MeKv7b+A2j6hfSWWjxRaz4O1s2N5bT6ZBFMGtIXa6ijxc6bPtWPPE1ttBziQV9lfCP4g3Pjzw5LHr0KWXijQZ/wCzPEFkn3Yr2NQwmhB5NvcoVnt27o2D8ysB55J8OP2gZIJNvjPwmkwUmJV8PXxRnA+VXL6odqk4BIBIHIrws/EnV9D8WaB42s/DPiCy8axm20TxT4fTRdSkg1G0eYJIsN4kBtna0lZrizuDJtaMujMBIdr32Hqtz13RgrfFb4sBuFOraSD9P7DtM14Z4Q+J2geDPC2l+E/DHx80xdJ0e1js7FZNN06dlghG2NTLt+cgcbu/WvSdY8VW3gb4r/ElPEGl660er3+m3VnNY6JqWoQTW8ekW1u8gmtIJYwBKjoQW3AqcjpXu/7Pel6lonwK8BaRrNpLY31poFjFPbToUlicRD5JEblWAwCp5B4NILHhegeIfFHxKs7u30H4xw6zawkRXY0vStI86LzAcK/mRS7NwzgtHg9s1yfh/T9D+Iui2PwN+E1ve3fhvw9qdtY+ItcuY5Irayj0y6S6uLKOWVUM99M6BNkSbIlcuSoCKfpX4rfC+88ST23jrwJJBpvjnRYmS0uJRtt9StSdz6XqJUEtbyHmN+WgkxInG5W+WtT+Jd94O8Qn4i+FPC/inT/E7IkHiXwvLoOpyW+rRw/KUW6treS2+2wAEWt4jmORcRyHy2BQ6A73uz79utC0C+unvb3S7G4uH+9LLbRSSHHTLspJx25r5u8c2VjaftB+FY7K2htwvg3XWIhjWPrqOmgZ2ge+K+nbO4F5Z294IpYPtESS+VMuyWPeobZIvOHXOGHY5FfLPxgvbjwt8ZPD3jTUdM1W70U+F9S0r7TpmnXWpeVey39pcLHLHZxyyIHjjYqzLtJUjOaEOWxt/s/aZplzafEB7qzt53HjzWAWliRzzDasOWB9a+grXR9Gsp/tVnp1pbz4I82KCON8HqNyqDg9+a8J/ZxjvpND8Y61c2F9p9trXi/UNQsF1C1msp5bV7e1iEpt7hUlQNJG4G9QSBnGCDX0PSGmfn3r4LfCn48ov3hq3jfP4wsR+hFemeIXXUviz4B03U+bPTfBM2raTG/3H1GSW3tbiZQeDJBbMqqeqrO3qa8c8U6/Hoeg/GPwZqmk6/8A2trmseKHsUg0PU7mCddQgMdmY7mC3eFhN8pXD9+cc19beJfhj/wnngfwxGbqbQPEvh+2tbrS9SRFklsbsWyxTRTRE7ZoJVzFcQkgOvQqyqwdybPU87+CGk6Nr/j/AMd+K/EqJd+LdD1l9KsorkBm0vRPIiksns42/wBWt5ueWWZeZHyhbEYUfVRJPJJNfB3iy08SaXf22p/Erwxr2g67YxtbweMvAYmv7doc7trpAkl0kTH5jbXlrLErdGY/NWfD8dbqzT7NH8c9GXy+CuuaBBHeqPSRQ9n83/bIfSh9xJpKx9ueLvC/hjxjoVxo3jGyt7/TCPNdbngQmP5hPHKCGheMjcsqMrIRkMCM1geFn+HPgb4cQ3vhm+tIfB2lWk94t+l2buD7OrPNcXDXbPI0pZy7vIzszMSSSTXxjceL9F8eTxrrniXxV8W4t4P9heHdIli0WUqchblLWKKGVfVLu8aI/wASms+STVPCPh7wh8IPiVpF/ofh2xjl8S6pDZabd39vf3d7qd1eWmjeZp0M0Cw2RZHuU3YkcRogMe4lFXOl8R+Pb7RNG1j9ofxRptxLquspBpfhjSXhlJ0/TbiUCyiuRGrtC1xIRdX8mPkULHyYlB5671P4XaR8OrFvD/iC8uviHo+oTeJTrs+h6vFa6nrFym2+t7iU2h2WdzF/oqrn91GkLDmIV7T4c0345+P7SfxRo1zo/hHSbm4kXS7HXdGvrjU5bSPCpd3Sre2vkGdgzpCY9yx7S53Egbv/AAr39oPv4w8If+E/qP8A8taegrPqeYaN4/tdDm0X9ovRLe7tvC/iaytrbxfYXETRS2sCkpb6q8TAHzLBy0VywHz2xLgkRJn7kR45Y0mhdZI5FDI6kFWVhkMpHBBHII6ivkbxPZfFTwALbVvG8tj4z8MXpks9Vg0LQbtbqwWSM+XcGAXV49zbswMUyrHuQMr8qGxf/Zp8UXbSa58ObS11afwz4fSC48P6nqWn3tj5dlcs6/2S5vYomkezK/unXcDAyKx3Icj7hHsfVlFFFIoKKKKACiiigD//1P3cooooAKKKKAClBI5BxSUUAKSTyTmkoooAKUsxGCSaSigB25sYycU2iigApwZhwCRTaKAFJJOTzSUUUALubGMnFJ05FFFAClmPUk/WkoooAKXc2MZOKSigBQzDoSKSiigAp25hwCabRQAUoJHQ4pKKAAknk0UUUAODMOATTaKKAFBI5HFIwDHLgMffmiigBdzYxk4oDMvQkfSkooAKKKKADpyKUknqSaSigAooooAKKKKACiiigD//1f3cooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/2Q==") center/contain no-repeat;border-radius:10px;flex:none}
+.credits{display:flex;gap:12px;align-items:center}
+.credits p{font-size:.78rem;color:var(--tinta-suave);line-height:1.35}
+/* fotos */
+.ph{margin:0;display:flex;flex-direction:column;gap:4px}
+.ph img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:14px;background:var(--linea)}
+.ph.hero img{aspect-ratio:3/2;max-height:30vh;object-position:50% 55%}
+.ph.thin img{aspect-ratio:21/9}
+.ph.slides img{aspect-ratio:3/2;transition:opacity .6s}
+.ph figcaption{font-size:.74rem;color:var(--tinta-suave);line-height:1.3}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+
+<!-- INICIO -->
+<section data-screen="inicio" class="stack">
+  <figure class="ph hero"><img src="img/tv-musgo-tempanos-250mm.jpg" width="1920" height="1280" alt="Musgos y líquenes en primer plano y dos témpanos azules desenfocados en el mar">
+    <figcaption><strong>¿Una Antártica más verde?</strong> Musgos y líquenes frente a témpanos en Lions Rump, isla Rey Jorge. Foto: Gabriel Ballesteros, ECA 54 (2018)</figcaption></figure>
+  <svg class="hero-art" id="heroArt" hidden viewBox="0 0 360 170" role="img" aria-label="Ilustración: barco rumbo a la Antártica con semillas escondidas"></svg>
+  <div style="display:flex;align-items:center;gap:12px"><span class="logo" role="img" aria-label="Logo PRISMA Antártica" style="width:56px"></span><p class="kicker">Un juego del proyecto PRISMA · Universidad de Talca</p></div>
+  <h1>Operación Polizón</h1>
+  <p>Las semillas viajan escondidas en la ropa y la mochila de quienes visitan la Antártica. Son polizonas. Tu misión: detenerlas antes de que bajen a tierra y encontrar a las que ya llegaron.</p>
+  <div class="stack" style="gap:6px">
+    <label for="apodo">Tu apodo (opcional)</label>
+    <input type="text" id="apodo" maxlength="16" autocomplete="off" placeholder="Ej.: Pingüino Veloz">
+  </div>
+  <button class="btn" id="btnStart">Misión completa</button>
+  <p class="small" id="modeNote"></p>
+  <div class="card stack" style="gap:10px">
+    <h3>Minijuegos</h3>
+    <p class="small">Juega una ronda suelta.</p>
+    <button class="btn sec" type="button" data-mini="0">¿Pasa o no pasa?</button>
+    <button class="btn sec" type="button" data-mini="1">Control de bioseguridad</button>
+    <button class="btn sec" type="button" data-mini="2">¿Quién es el invasor?</button>
+    <button class="btn sec" type="button" data-mini="3">¿Qué harías tú?</button>
+  </div>
+  <p class="small"><a id="modeLink" href="#charla" style="color:var(--oceano);font-weight:700"></a></p>
+</section>
+
+<!-- INTRO DE RONDA -->
+<section data-screen="intro" class="stack" hidden>
+  <p class="kicker" id="introKicker"></p>
+  <h2 id="introTitle"></h2>
+  <figure class="ph" id="introFig" hidden><img id="introImg" alt=""><figcaption id="introCap"></figcaption></figure>
+  <div id="introBody" class="stack"></div>
+  <button class="btn" id="btnIntro">¡Vamos!</button>
+</section>
+
+<!-- JUEGO -->
+<section data-screen="juego" hidden>
+  <div class="hud">
+    <div class="hud-row"><span class="hud-round" id="hudRound"></span><span class="hud-score" id="hudScore">0</span></div>
+    <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
+    <div class="hud-row"><span class="prompt" id="hudPrompt"></span><span class="small" id="hudTime"></span></div>
+  </div>
+  <div class="stage" id="stageWrap"><svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Escena de juego"></svg></div>
+  <div class="swipe" id="swipe" hidden>
+    <div class="deck" id="deck"></div>
+    <div class="swipe-btns"><button class="btn" type="button" id="btnRev">← Revisar</button><button class="btn pas" type="button" id="btnPas">Pasa →</button></div>
+    <p class="small" style="text-align:center">Desliza la tarjeta o usa los botones.</p>
+  </div>
+</section>
+
+<!-- RESULTADO DE RONDA -->
+<section data-screen="resultado" class="stack" hidden>
+  <p class="kicker" id="resKicker"></p>
+  <h2 id="resTitle"></h2>
+  <p id="resText"></p>
+  <div id="resFacts" class="stack"></div>
+  <button class="btn" id="btnNext">Siguiente</button>
+</section>
+
+<!-- QUIZ -->
+<section data-screen="quiz" class="stack" hidden>
+  <div class="hud-row"><span class="kicker" id="quizKicker"></span><span class="hud-score" id="quizScore"></span></div>
+  <figure class="ph thin" id="quizFig" hidden><img id="quizImg" alt=""><figcaption id="quizCap"></figcaption></figure>
+  <h2 id="quizQ"></h2>
+  <div id="quizOpts" class="stack" style="gap:10px"></div>
+  <p id="quizFb" class="card fact" hidden></p>
+  <button class="btn" id="btnQuiz" hidden>Siguiente</button>
+</section>
+
+<!-- FINAL -->
+<section data-screen="final" class="stack" hidden>
+  <p class="kicker" id="finKicker">Misión cumplida</p>
+  <figure class="ph" id="finFig" hidden><img id="finImg" alt=""><figcaption id="finCap"></figcaption></figure>
+  <div class="card stack" style="text-align:center;align-items:center">
+    <p id="finName" style="font-weight:700;font-size:1.2rem"></p>
+    <div class="bigscore" id="finScore"></div>
+    <p style="font-family:var(--display);font-weight:800;font-size:1.35rem;color:var(--parka-osc)" id="finRank"></p>
+    <p class="small" id="finBoard">Muestra esta pantalla en el stand de PRISMA.</p>
+    <p class="small" id="finMini" hidden></p>
+  </div>
+  <div class="card stack">
+    <h3>Lo que aprendiste</h3>
+    <p>Muchas semillas llegan a la Antártica en la ropa, las botas y la carga de las personas. Con el calentamiento se espera una Antártica más verde, y en ese suelo nuevo también podrían crecer plantas de afuera. Por eso revisar y limpiar el equipo antes de viajar es la mejor defensa.</p>
+    <details>
+      <summary>Fuentes científicas del juego</summary>
+      <ol class="refs" id="refs"></ol>
+    </details>
+  </div>
+  <button class="btn" id="btnAgain">Jugar otra vez</button>
+  <div class="credits"><span class="logo" role="img" aria-label="Logo PRISMA Antártica" style="width:72px"></span>
+    <div class="stack" style="gap:4px;min-width:0"><p>PRISMA: Plant Risk of Invasion in a Changing Antarctica. Proyecto Anillo, Universidad de Talca.</p>
+    <p>Fotos: Gabriel Ballesteros (ECA 53, 2017 · ECA 54, 2018).</p>
+    <p>Este trabajo fue financiado por ANID – SCIA Anillos de Investigación Temáticos 2025 (PRISMA – ATE250059).</p></div></div>
+</section>
+
+<!-- DATOS (conteo de jugadas, solo para el equipo) -->
+<section data-screen="datos" class="stack" hidden>
+  <div class="card stack">
+    <h2>Conteo de jugadas</h2>
+    <p class="small">Se guarda solo en este navegador, sin nombres ni datos personales. Exporta el CSV al terminar cada día.</p>
+    <div id="datosResumen" class="stack" style="gap:4px"></div>
+    <div id="datosDias" class="small"></div>
+    <button class="btn" id="btnCsv">Descargar CSV</button>
+    <button class="btn sec" id="btnBorrar">Borrar conteo de este navegador</button>
+    <button class="btn sec" id="btnVolver">Volver al juego</button>
+  </div>
+</section>
+
+<!-- TV / STAND -->
+<section data-screen="tv" class="stack" hidden>
+  <div class="tv-head">
+    <div style="display:flex;gap:14px;align-items:center"><span class="logo" role="img" aria-label="Logo PRISMA Antártica" style="width:84px"></span><div><p class="kicker">Proyecto PRISMA · FestiCiencia UTalca</p><h1>Operación Polizón</h1></div></div>
+    <button class="btn sec" id="btnDemo" style="width:auto">Jugar en esta pantalla</button>
+  </div>
+  <div class="tv-grid">
+    <div class="card stack future">
+      <div class="hud-row"><h2>Antártica 2100</h2><span class="small">Simulación ilustrativa, no es un modelo científico</span></div>
+      <svg id="futureSvg" viewBox="0 0 450 240" role="img" aria-label="Animación: de hoy a 2100, con más calor el hielo retrocede, crecen las plantas nativas y llegan plantas invasoras con las personas"></svg>
+      <p class="fut-text" id="futCap" aria-live="off">Hoy el frío es una barrera fuerte.</p>
+      <p class="small" id="futureNote"></p>
+    </div>
+    <div class="stack">
+      <figure class="ph slides card" style="padding:10px"><img id="tvImg" src="img/tv-musgo-tempanos-250mm.jpg" alt="Fotografía de la Antártica">
+        <figcaption id="tvCap">¿Una Antártica más verde? Musgos y líquenes frente a témpanos en Lions Rump, isla Rey Jorge. Foto: Gabriel Ballesteros, ECA 54 (2018)</figcaption></figure>
+      <div class="card stack">
+        <h2>Escanea y juega</h2>
+        <div class="qrbox"><div id="qr" aria-label="Código QR del juego"></div>
+          <p style="flex:1;min-width:160px">Abre la cámara de tu celular, escanea el código y juega. Son 3 minutos.</p></div>
+        <details><summary class="small">Enlace del QR (para el equipo)</summary>
+          <div class="stack" style="gap:6px;margin-top:8px"><input type="text" id="qrUrl" aria-label="Enlace público del juego">
+          <button class="btn sec" id="btnQr">Actualizar QR</button><p class="small" id="qrMsg"></p></div></details>
+      </div>
+    </div>
+  </div>
+  <p class="small">Este trabajo fue financiado por ANID – SCIA Anillos de Investigación Temáticos 2025 (PRISMA – ATE250059).</p>
+</section>
+</div>
+
+<script src="vendor/qrcode.min.js" async id="qrlib"></script>
+<script>
+(function(){
+"use strict";
+var NS = "http://www.w3.org/2000/svg";
+var $ = function(s){ return document.querySelector(s); };
+function el(tag, attrs, parent){
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function rnd(a, b){ return a + Math.random() * (b - a); }
+function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function seeded(seed){ var s = seed >>> 0 || 1; return function(){ s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function store(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch(e){ return null; } }
+function shuffle(a){ for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+/* ---------- Fuentes ---------- */
+var REFS = {
+  huiskes: ["Huiskes et al. (2014) Aliens in Antarctica: assessing transfer of plant propagules by human visitors to reduce invasion risk. Biological Conservation.", "10.1016/j.biocon.2014.01.038"],
+  chown: ["Chown et al. (2012) Continent-wide risk assessment for the establishment of nonindigenous species in Antarctica. PNAS.", "10.1073/pnas.1119787109"],
+  whinam: ["Whinam et al. (2005) Subantarctic hitchhikers: expeditioners as vectors for the introduction of alien organisms. Biological Conservation.", "10.1016/j.biocon.2004.04.020"],
+  lee: ["Lee & Chown (2011) Quantification of intra-regional propagule movements in the Antarctic. Antarctic Science.", "10.1017/s0954102011000198"],
+  chwed: ["Chwedorzewska et al. (2015) Poa annua L. in the maritime Antarctic: an overview. Polar Record.", "10.1017/s0032247414000916"],
+  wodk: ["Wódkiewicz et al. (2013) Diaspores of the introduced species Poa annua L. in soil samples from King George Island. Arctic, Antarctic, and Alpine Research.", "10.1657/1938-4246-45.3.415"],
+  molina14: ["Molina-Montenegro et al. (2014) Assessing the importance of human activities for the establishment of the invasive Poa annua in Antarctica. Polar Research.", "10.3402/polar.v33.21425"],
+  molina23: ["Molina-Montenegro et al. (2023) The “Trojan horse” strategy: seed fungal endophyte symbiosis helps to explain the invasion success of the grass, Poa annua, in Maritime Antarctica. Diversity and Distributions.", "10.1111/ddi.13768"],
+  galera: ["Galera et al. (2021) Evaluation of factors influencing the eradication of annual bluegrass (Poa annua L.) from Point Thomas Oasis, King George Island. Polar Biology.", "10.1007/s00300-021-02941-1"],
+  cannone: ["Cannone et al. (2016) Vascular plant changes in extreme environments: effects of multiple drivers. Climatic Change.", "10.1007/s10584-015-1551-7"],
+  hughes11: ["Hughes et al. (2011) Food for thought: risks of non-native species transfer to the Antarctic region with fresh produce. Biological Conservation.", "10.1016/j.biocon.2011.03.001"],
+  lee09: ["Lee & Chown (2009) Breaching the dispersal barrier to invasion: quantification and management. Ecological Applications.", "10.1890/08-2157.1"],
+  roland: ["Roland et al. (2024) Sustained greening of the Antarctic Peninsula observed from satellites. Nature Geoscience.", "10.1038/s41561-024-01564-5"],
+  lee17: ["Lee et al. (2017) Climate change drives expansion of Antarctic ice-free habitat. Nature.", "10.1038/nature22996"],
+  colesie: ["Colesie et al. (2025) Is Antarctica greening? Global Change Biology.", "10.1111/gcb.70294"],
+  inach: ["INACH (2021) Enciclopedia visual de la Antártica. Instituto Antártico Chileno, Punta Arenas.", ""],
+  molina19: ["Molina-Montenegro et al. (2019) Increasing impacts by Antarctica’s most widespread invasive plant species as result of direct competition with native vascular plants. NeoBiota.", "10.3897/neobiota.51.37250"]
+};
+function cite(key){ var r = REFS[key]; return r[0].split(" (")[0] + " (" + r[0].match(/\((\d{4})\)/)[1] + ")"; }
+function fact(text, keys){
+  var d = document.createElement("div"); d.className = "card fact";
+  var p = document.createElement("p"); p.textContent = text; d.appendChild(p);
+  var s = document.createElement("p"); s.className = "src"; s.textContent = "Fuente: " + keys.map(cite).join("; "); d.appendChild(s);
+  return d;
+}
+
+/* ---------- Estado ---------- */
+var S = { mode: "mision", name: "", score: 0, seedsTotal: 8, seedsFound: 0, invFound: 0, invTotal: 0, quizRight: 0, zone: 0 };
+var targets = [], playing = false, timerId = null, tStart = 0, tDur = 0, onTimeUp = null, onAllFound = null, wrongPenalty = 2;
+
+function show(id){
+  document.querySelectorAll("[data-screen]").forEach(function(s){ s.hidden = s.dataset.screen !== id; });
+  window.scrollTo(0, 0);
+}
+function setScore(delta){
+  S.score = Math.max(0, S.score + delta);
+  $("#hudScore").textContent = S.score;
+}
+var toastT = null;
+function toast(msg){
+  var t = $(".toast"); if (!t){ t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, 1600);
+}
+
+/* ---------- Temporizador ---------- */
+function startTimer(sec, cb){
+  clearInterval(timerId); tStart = performance.now(); tDur = sec; onTimeUp = cb;
+  timerId = setInterval(tick, 100); tick();
+}
+function timeLeft(){ return Math.max(0, tDur - (performance.now() - tStart) / 1000); }
+function tick(){
+  var left = timeLeft();
+  $("#timebar").style.transform = "scaleX(" + (left / tDur) + ")";
+  $("#hudTime").textContent = Math.ceil(left) + " s";
+  if (left <= 0){ stopRound(); if (onTimeUp) onTimeUp(); }
+}
+function stopRound(){ clearInterval(timerId); playing = false; }
+
+/* ---------- Toques ---------- */
+function svgPoint(svg, evt){
+  var p = svg.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function fx(svg, x, y, txt, bad){
+  var c = el("circle", { cx: x, cy: y, r: 14, "class": "fx-ring" + (bad ? " fx-bad" : "") }, svg);
+  var t = el("text", { x: x, y: y - 12, "text-anchor": "middle", "class": "fx-txt" + (bad ? " bad" : "") }, svg);
+  t.textContent = txt;
+  setTimeout(function(){ c.remove(); t.remove(); }, 950);
+}
+function onTap(evt){
+  if (!playing) return;
+  var svg = $("#stage");
+  var pt = svgPoint(svg, evt);
+  var r = 24 / svg.getScreenCTM().a;
+  var best = null, bd = Infinity;
+  targets.forEach(function(t){
+    if (t.found) return;
+    var d = Math.hypot(t.x - pt.x, t.y - pt.y);
+    if (d < r + (t.rad || 0) && d < bd){ bd = d; best = t; }
+  });
+  if (best && best.good){
+    best.found = true; setScore(10);
+    el("circle", { cx: best.x, cy: best.y, r: best.mark || 9, "class": "found-mark" }, svg);
+    fx(svg, best.x, best.y, "+10");
+    if (best.onFind) best.onFind();
+    if (targets.every(function(t){ return !t.good || t.found; })){
+      var bonus = Math.min(20, Math.round(timeLeft())); stopRound();
+      if (bonus > 0){ setScore(bonus); toast("¡Todas! Bono de tiempo +" + bonus); }
+      setTimeout(onAllFound, 700);
+    }
+  } else if (best && !best.good){
+    setScore(-5); fx(svg, pt.x, pt.y, "−5", true); toast(best.msg || "¡Ojo! Esa es nativa");
+  } else {
+    setScore(-wrongPenalty); fx(svg, pt.x, pt.y, "−" + wrongPenalty, true);
+  }
+}
+/* Un toque cuenta solo al levantar un dedo, rápido y sin arrastrar: pellizcar o deslizar no suma ni resta. */
+var ptrs = {}, multi = false;
+function nPtrs(){ return Object.keys(ptrs).length; }
+var stageEl = $("#stage");
+stageEl.addEventListener("pointerdown", function(e){
+  ptrs[e.pointerId] = { x: e.clientX, y: e.clientY, t: performance.now() };
+  if (nPtrs() > 1) multi = true;
+});
+stageEl.addEventListener("pointerup", function(e){
+  var p = ptrs[e.pointerId]; delete ptrs[e.pointerId];
+  if (multi){ if (!nPtrs()) multi = false; return; }
+  if (!p) return;
+  if (performance.now() - p.t > 600 || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 12) return;
+  onTap(e);
+});
+stageEl.addEventListener("pointercancel", function(e){ delete ptrs[e.pointerId]; if (!nPtrs()) multi = false; });
+
+/* ---------- Dibujo: semillas ---------- */
+function drawSeed(g, x, y){
+  var s = el("g", { transform: "translate(" + x + " " + y + ") rotate(" + rnd(0, 180) + ") scale(1.7)" }, g);
+  if (Math.random() < 0.65){
+    el("ellipse", { rx: 5, ry: 2.4, fill: "#f2c35a", stroke: "#3d2a0c", "stroke-width": 1.1 }, s);
+    el("line", { x1: -3, y1: 0, x2: 3, y2: 0, stroke: "#c08a2a", "stroke-width": 0.7 }, s);
+    el("line", { x1: 5, y1: 0, x2: 9, y2: -1, stroke: "#3d2a0c", "stroke-width": 0.9 }, s);
+  } else {
+    for (var i = 0; i < 8; i++){
+      var a = i * Math.PI / 4;
+      el("line", { x1: 0, y1: 0, x2: Math.cos(a) * 5.4, y2: Math.sin(a) * 5.4, stroke: "#3d2610", "stroke-width": 1 }, s);
+    }
+    el("circle", { r: 3.1, fill: "#e0a14c", stroke: "#3d2610", "stroke-width": 0.9 }, s);
+  }
+}
+
+/* ---------- Control de bioseguridad (semillas en ropa y mochila) ---------- */
+var ZONES_R1 = [
+  { x: 80, y: 463, w: 58, h: 7, wt: 3, n: "suela" }, { x: 146, y: 463, w: 58, h: 7, wt: 3, n: "suela" },
+  { x: 86, y: 438, w: 48, h: 20, wt: 2, n: "bota" }, { x: 152, y: 438, w: 48, h: 20, wt: 2, n: "bota" },
+  { x: 96, y: 421, w: 38, h: 9, wt: 1.2, n: "calcetín" }, { x: 150, y: 421, w: 38, h: 9, wt: 1.2, n: "calcetín" },
+  { x: 96, y: 400, w: 38, h: 16, wt: 1.6, n: "basta" }, { x: 150, y: 400, w: 38, h: 16, wt: 1.6, n: "basta" },
+  { x: 60, y: 238, w: 22, h: 12, wt: 1.3, n: "velcro" }, { x: 200, y: 238, w: 22, h: 12, wt: 1.3, n: "velcro" },
+  { x: 104, y: 193, w: 26, h: 12, wt: 0.8, n: "bolsillo" }, { x: 154, y: 193, w: 26, h: 12, wt: 0.8, n: "bolsillo" },
+  { x: 240, y: 352, w: 50, h: 100, wt: 2.2, n: "mochila" }
+];
+function weightedZone(zs){
+  var tot = zs.reduce(function(a, z){ return a + z.wt; }, 0), r = Math.random() * tot;
+  for (var i = 0; i < zs.length; i++){ r -= zs[i].wt; if (r <= 0) return zs[i]; }
+  return zs[zs.length - 1];
+}
+function drawPort(svg){
+  svg.innerHTML = ""; svg.setAttribute("viewBox", "0 0 320 520");
+  var g = el("g", {}, svg);
+  el("rect", { x: 0, y: 0, width: 320, height: 520, fill: "#d9e5ec" }, g);
+  for (var i = 0; i < 12; i++) el("line", { x1: 0, y1: 20 + i * 24, x2: 320, y2: 20 + i * 24, stroke: "#c6d5df", "stroke-width": 6 }, g);
+  el("rect", { x: 0, y: 468, width: 320, height: 52, fill: "#98a5ad" }, g);
+  for (i = 0; i < 6; i++) el("line", { x1: 0, y1: 476 + i * 9, x2: 320, y2: 476 + i * 9, stroke: "#8a979f", "stroke-width": 1 }, g);
+  for (i = 0; i < 40; i++) el("circle", { cx: rnd(0, 320), cy: rnd(470, 518), r: rnd(0.8, 2.2), fill: pick(["#7d878d", "#b7bec2", "#6f797f"]) }, g);
+  el("text", { x: 12, y: 30, fill: "#7f95a5", "font-family": "Bricolage Grotesque, sans-serif", "font-weight": 800, "font-size": 15 }, g).textContent = "A BORDO · CONTROL DE BIOSEGURIDAD";
+  // mochila
+  var m = el("g", {}, g);
+  el("rect", { x: 234, y: 340, width: 64, height: 128, rx: 16, fill: "#4a5d78", stroke: "#34445a", "stroke-width": 2 }, m);
+  el("path", { d: "M236 362 Q266 344 296 362 L296 350 Q266 332 236 350 Z", fill: "#3e4f68" }, m);
+  el("rect", { x: 242, y: 404, width: 48, height: 42, rx: 9, fill: "#3e4f68", stroke: "#2f3d52" }, m);
+  el("line", { x1: 244, y1: 418, x2: 288, y2: 418, stroke: "#2f3d52", "stroke-dasharray": "3 3" }, m);
+  el("rect", { x: 254, y: 376, width: 24, height: 12, rx: 2, fill: "#eef4f7" }, m);
+  // piernas
+  el("polygon", { points: "90,262 140,262 136,420 94,420", fill: "#2b3f55" }, g);
+  el("polygon", { points: "144,262 194,262 190,420 148,420", fill: "#2b3f55" }, g);
+  el("rect", { x: 94, y: 398, width: 42, height: 22, fill: "#22344a" }, g);
+  el("rect", { x: 148, y: 398, width: 42, height: 22, fill: "#22344a" }, g);
+  el("rect", { x: 100, y: 320, width: 30, height: 30, rx: 6, fill: "#253a50" }, g);
+  el("rect", { x: 154, y: 320, width: 30, height: 30, rx: 6, fill: "#253a50" }, g);
+  // calcetines
+  el("rect", { x: 94, y: 420, width: 42, height: 12, fill: "#b8afa2" }, g);
+  el("rect", { x: 148, y: 420, width: 42, height: 12, fill: "#b8afa2" }, g);
+  // botas
+  [80, 146].forEach(function(bx){
+    el("rect", { x: bx + 2, y: 432, width: 58, height: 34, rx: 10, fill: "#6a4428" }, g);
+    el("ellipse", { cx: bx + 14, cy: 452, rx: 12, ry: 10, fill: "#57361f" }, g);
+    el("rect", { x: bx, y: 462, width: 62, height: 9, rx: 3, fill: "#2b1d12" }, g);
+    for (var k = 0; k < 7; k++) el("rect", { x: bx + 4 + k * 8, y: 465, width: 4, height: 6, fill: "#45301f" }, g);
+    el("line", { x1: bx + 22, y1: 438, x2: bx + 40, y2: 438, stroke: "#c9a46b", "stroke-width": 2 }, g);
+    el("line", { x1: bx + 22, y1: 444, x2: bx + 40, y2: 444, stroke: "#c9a46b", "stroke-width": 2 }, g);
+  });
+  // brazos
+  el("polygon", { points: "98,110 78,116 60,238 84,242", fill: "#e4552a", stroke: "#b8411d", "stroke-width": 2 }, g);
+  el("polygon", { points: "182,110 202,116 222,238 198,242", fill: "#e4552a", stroke: "#b8411d", "stroke-width": 2 }, g);
+  el("rect", { x: 58, y: 236, width: 28, height: 16, rx: 3, fill: "#3a4047" }, g);
+  el("rect", { x: 196, y: 236, width: 28, height: 16, rx: 3, fill: "#3a4047" }, g);
+  el("circle", { cx: 71, cy: 264, r: 11, fill: "#24323f" }, g);
+  el("circle", { cx: 211, cy: 264, r: 11, fill: "#24323f" }, g);
+  // parka
+  el("path", { d: "M96 104 Q140 92 184 104 L198 272 Q140 284 82 272 Z", fill: "#e4552a", stroke: "#b8411d", "stroke-width": 2 }, g);
+  el("rect", { x: 86, y: 226, width: 109, height: 10, fill: "#e7eef2" }, g);
+  el("line", { x1: 140, y1: 106, x2: 140, y2: 276, stroke: "#b8411d", "stroke-width": 2 }, g);
+  el("rect", { x: 102, y: 190, width: 30, height: 17, rx: 3, fill: "#cf4a22" }, g);
+  el("rect", { x: 152, y: 190, width: 30, height: 17, rx: 3, fill: "#cf4a22" }, g);
+  el("circle", { cx: 117, cy: 199, r: 2, fill: "#8a3a1a" }, g);
+  el("circle", { cx: 167, cy: 199, r: 2, fill: "#8a3a1a" }, g);
+  el("rect", { x: 150, y: 132, width: 26, height: 14, rx: 2, fill: "#eef4f7" }, g);
+  el("text", { x: 163, y: 142, "text-anchor": "middle", "font-size": 7, "font-weight": 700, fill: "#1d5a7a", "font-family": "sans-serif" }, g).textContent = "PRISMA";
+  el("path", { d: "M108 100 Q140 122 172 100 L168 90 Q140 108 112 90 Z", fill: "#c9461f" }, g);
+  // cabeza
+  el("path", { d: "M114 66 Q106 94 116 106", stroke: "#5a3a22", "stroke-width": 7, fill: "none", "stroke-linecap": "round" }, g);
+  el("path", { d: "M166 66 Q174 94 164 106", stroke: "#5a3a22", "stroke-width": 7, fill: "none", "stroke-linecap": "round" }, g);
+  el("circle", { cx: 140, cy: 70, r: 26, fill: "#efc39b" }, g);
+  el("path", { d: "M113 64 Q114 34 140 32 Q166 34 167 64 Z", fill: "#2f6f7e" }, g);
+  el("rect", { x: 111, y: 57, width: 58, height: 11, rx: 4, fill: "#255a66" }, g);
+  el("circle", { cx: 140, cy: 31, r: 7, fill: "#f4f1ea" }, g);
+  el("circle", { cx: 131, cy: 76, r: 2.6, fill: "#1c2a35" }, g);
+  el("circle", { cx: 149, cy: 76, r: 2.6, fill: "#1c2a35" }, g);
+  el("path", { d: "M132 85 Q140 91 148 85", stroke: "#1c2a35", "stroke-width": 2, fill: "none", "stroke-linecap": "round" }, g);
+  // distractores: pelusas y piedritas
+  for (i = 0; i < 14; i++){
+    var z = weightedZone(ZONES_R1);
+    el("circle", { cx: rnd(z.x, z.x + z.w), cy: rnd(z.y, z.y + z.h), r: rnd(1, 2), fill: pick(["#8c949a", "#c2c8cc", "#5c6870"]) }, g);
+  }
+  // semillas
+  targets = [];
+  var tries = 0;
+  while (targets.length < S.seedsTotal && tries < 500){
+    tries++;
+    var zz = weightedZone(ZONES_R1);
+    var x = rnd(zz.x, zz.x + zz.w), y = rnd(zz.y, zz.y + zz.h);
+    if (targets.some(function(t){ return Math.hypot(t.x - x, t.y - y) < 26; })) continue;
+    drawSeed(g, x, y);
+    targets.push({ x: x, y: y, good: true, zone: zz.n, onFind: function(){ S.seedsFound++; updatePrompt1(); } });
+  }
+}
+function updatePrompt1(){ $("#hudPrompt").innerHTML = "Semillas: <b>" + S.seedsFound + " / " + S.seedsTotal + "</b>"; }
+
+/* ---------- Dibujo: plantas ---------- */
+function deschampsia(g, x, y, s){
+  var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
+  el("ellipse", { cx: 0, cy: 1, rx: 6, ry: 2.4, fill: "#33501f" }, p);
+  for (var i = 0; i < 11; i++){
+    var a = (-90 + (i - 5) * 8 + rnd(-4, 4)) * Math.PI / 180, L = rnd(14, 21);
+    el("line", { x1: rnd(-2, 2), y1: 0, x2: Math.cos(a) * L, y2: Math.sin(a) * L, stroke: pick(["#4e6e33", "#46632c", "#5a7a3a"]), "stroke-width": 1.2, "stroke-linecap": "round" }, p);
+  }
+}
+function colobanthus(g, x, y, s){
+  var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
+  el("ellipse", { cx: 0, cy: -4, rx: 12, ry: 7.5, fill: "#8fa83e", stroke: "#5f7428", "stroke-width": 1.2 }, p);
+  for (var i = 0; i < 9; i++) el("circle", { cx: rnd(-8, 8), cy: rnd(-8, 0), r: 1.6, fill: "#73892f" }, p);
+  for (i = 0; i < 4; i++) el("circle", { cx: rnd(-7, 7), cy: rnd(-9, -2), r: 1.3, fill: "#e6e07a" }, p);
+}
+function poa(g, x, y, s){
+  /* Forma primero: hojas anchas, blandas y caídas + espigas blancas abiertas (no depende del color). */
+  var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
+  el("ellipse", { cx: 0, cy: 1, rx: 8, ry: 2.6, fill: "#5f8a2a" }, p);
+  for (var i = 0; i < 7; i++){
+    var a = (-90 + (i - 3) * 23 + rnd(-5, 5)) * Math.PI / 180, L = rnd(11, 15);
+    var ex = Math.cos(a) * L, ey = Math.sin(a) * L;
+    el("path", { d: "M0 0 Q" + (ex * 0.55) + " " + (ey * 0.95 - 3) + " " + (ex * 1.08) + " " + (ey + 5), stroke: pick(["#8fbf3c", "#99c846", "#86b636"]), "stroke-width": 3.2, fill: "none", "stroke-linecap": "round" }, p);
+  }
+  for (i = 0; i < 3; i++){
+    var bx = (i - 1) * 7 + rnd(-1, 1), by = -19 - rnd(0, 3);
+    el("line", { x1: bx * 0.4, y1: -4, x2: bx, y2: by + 5, stroke: "#6f9a2c", "stroke-width": 1.1 }, p);
+    [[0, 0], [-2.4, 2.6], [2.4, 2.6], [-1.3, 5], [1.3, 5]].forEach(function(o){
+      el("circle", { cx: bx + o[0], cy: by + o[1], r: 1.5, fill: "#fbf8e6", stroke: "#8f8a55", "stroke-width": 0.6 }, p);
+    });
+  }
+}
+
+/* ---------- Ronda 2: ¿quién es el invasor? ---------- */
+var ZONAS = [
+  { id: "base", titulo: "Zona 1 · Alrededores de la base", seg: 40 },
+  { id: "glaciar", titulo: "Zona 2 · Frente de un glaciar", seg: 40 }
+];
+function drawScene(svg, kind, nInv){
+  svg.innerHTML = ""; svg.setAttribute("viewBox", "0 0 360 560");
+  var g = el("g", {}, svg), i;
+  el("rect", { x: 0, y: 0, width: 360, height: 560, fill: "#8b7d70" }, g);
+  for (i = 0; i < 280; i++) el("circle", { cx: rnd(0, 360), cy: rnd(0, 560), r: rnd(0.7, 2.1), fill: pick(["#7a6d61", "#9a8d80", "#6c6157", "#a59a8e"]) }, g);
+  var obst = [], route = null, minY;
+  if (kind === "base"){
+    minY = 100;
+    el("rect", { x: 30, y: 30, width: 70, height: 46, fill: "#e7e1d6", stroke: "#b8b0a2" }, g);
+    el("rect", { x: 30, y: 26, width: 70, height: 6, fill: "#f6f9fb" }, g);
+    el("rect", { x: 112, y: 18, width: 150, height: 60, fill: "#c63b2b", stroke: "#8f2a1f" }, g);
+    el("rect", { x: 112, y: 14, width: 150, height: 6, fill: "#f6f9fb" }, g);
+    el("rect", { x: 172, y: 50, width: 22, height: 28, fill: "#7d2118" }, g);
+    [124, 146, 210, 234].forEach(function(wx){ el("rect", { x: wx, y: 32, width: 16, height: 12, fill: "#cfe3ee", stroke: "#7d2118" }, g); });
+    el("line", { x1: 280, y1: 78, x2: 280, y2: 10, stroke: "#5b6670", "stroke-width": 3 }, g);
+    el("circle", { cx: 280, cy: 10, r: 4, fill: "#5b6670" }, g);
+    obst.push({ x: 180, y: 50, r: 90 });
+    route = el("path", { d: "M183 80 C 230 150, 120 230, 170 320 S 240 450, 180 560", stroke: "#b3a28c", "stroke-width": 22, fill: "none", "stroke-linecap": "round" }, g);
+    el("path", { d: "M183 80 C 230 150, 120 230, 170 320 S 240 450, 180 560", stroke: "#c4b49f", "stroke-width": 10, fill: "none", "stroke-dasharray": "2 9", "stroke-linecap": "round" }, g);
+  } else {
+    minY = 150;
+    el("path", { d: "M0 0 H360 V118 Q300 150 240 128 Q180 160 120 132 Q60 150 0 126 Z", fill: "#e9f3f8", stroke: "#bcd6e5", "stroke-width": 2 }, g);
+    for (i = 0; i < 7; i++){ var cx = rnd(20, 340); el("path", { d: "M" + cx + " " + rnd(20, 60) + " l" + rnd(-8, 8) + " " + rnd(25, 45), stroke: "#9ec3d8", "stroke-width": 2, fill: "none" }, g); }
+    el("path", { d: "M215 130 C 200 200, 260 260, 230 330 S 200 470, 250 560", stroke: "#7fb3cf", "stroke-width": 8, fill: "none" }, g);
+    route = el("path", { d: "M30 560 C 60 470, 40 380, 110 320 S 150 210, 150 160", stroke: "none", fill: "none" }, g);
+    var L0 = route.getTotalLength();
+    for (var d = 0; d < L0; d += 13){
+      var q = route.getPointAtLength(d), side = (Math.round(d / 13) % 2) ? 4 : -4;
+      el("ellipse", { cx: q.x + side, cy: q.y, rx: 2.4, ry: 4, fill: "#77695d" }, g);
+    }
+  }
+  for (i = 0; i < 6; i++){
+    var sx = rnd(20, 340), sy = rnd(minY, 540);
+    el("ellipse", { cx: sx, cy: sy, rx: rnd(14, 30), ry: rnd(6, 12), fill: "#f2f7fa", opacity: 0.92 }, g);
+  }
+  for (i = 0; i < 7; i++){
+    var rx = rnd(20, 340), ry = rnd(minY + 10, 540), rr = rnd(13, 24), pts = [];
+    for (var a = 0; a < 7; a++){ var ang = a / 7 * Math.PI * 2, rad = rr * rnd(0.75, 1.1); pts.push((rx + Math.cos(ang) * rad).toFixed(1) + "," + (ry + Math.sin(ang) * rad * 0.75).toFixed(1)); }
+    el("polygon", { points: pts.join(" "), fill: pick(["#7c8288", "#868c92", "#71777d"]), stroke: "#5f656a", "stroke-width": 1.2 }, g);
+    for (var l = 0; l < 5; l++) el("circle", { cx: rx + rnd(-rr * 0.6, rr * 0.6), cy: ry + rnd(-rr * 0.4, rr * 0.4), r: rnd(1.2, 2.6), fill: pick(["#e08a2a", "#d9b23a", "#c96f22"]) }, g);
+    obst.push({ x: rx, y: ry, r: rr + 6 });
+  }
+  for (i = 0; i < 6; i++){
+    var mx = rnd(20, 340), my = rnd(minY, 540);
+    for (var m = 0; m < 8; m++) el("circle", { cx: mx + rnd(-12, 12), cy: my + rnd(-6, 6), r: rnd(3, 6), fill: pick(["#4b6a34", "#5c7d3e", "#3f5c2b"]) }, g);
+  }
+  targets = [];
+  var plants = [];
+  function free(x, y){
+    if (y < minY + 20 || y > 545 || x < 16 || x > 344) return false;
+    if (obst.some(function(o){ return Math.hypot(o.x - x, o.y - y) < o.r; })) return false;
+    return !plants.some(function(p){ return Math.hypot(p.x - x, p.y - y) < 30; });
+  }
+  var L = route.getTotalLength(), tries = 0, inv = 0;
+  while (inv < nInv && tries < 800){
+    tries++;
+    var q2 = route.getPointAtLength(rnd(0.08, 1) * L), x = q2.x + rnd(-42, 42), y = q2.y + rnd(-30, 30);
+    if (Math.hypot(x - q2.x, y - q2.y) < 14 || !free(x, y)) continue;
+    plants.push({ x: x, y: y, k: "poa" }); inv++;
+  }
+  var want = { des: 13, col: 7 };
+  ["des", "col"].forEach(function(k){
+    var n = 0, t2 = 0;
+    while (n < want[k] && t2 < 800){ t2++; var x3 = rnd(20, 340), y3 = rnd(minY + 20, 540); if (!free(x3, y3)) continue; plants.push({ x: x3, y: y3, k: k }); n++; }
+  });
+  plants.sort(function(a, b){ return a.y - b.y; });
+  plants.forEach(function(p){
+    var sc = rnd(0.95, 1.2);
+    if (p.k === "poa"){ poa(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 6, rad: 4, mark: 16, good: true, onFind: function(){ S.invFound++; updatePrompt2(); } }); }
+    else if (p.k === "des"){ deschampsia(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 8, rad: 2, good: false, msg: "¡Ojo! Es pasto antártico, nativo" }); }
+    else { colobanthus(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 4, rad: 2, good: false, msg: "¡Ojo! Es clavelito antártico, nativo" }); }
+  });
+  return inv;
+}
+var zoneInv = 0, zoneFound0 = 0;
+function updatePrompt2(){ $("#hudPrompt").innerHTML = "Invasoras: <b>" + (S.invFound - zoneFound0) + " / " + zoneInv + "</b>"; }
+
+/* ---------- Flujo ---------- */
+/* ---------- Fotos (Gabriel Ballesteros, ECA 53 y ECA 54) ---------- */
+var PH = {
+  carga: ["img/carga-bolsos-ancha.jpg","Equipaje y carga de la expedición sobre una red, listos para viajar a la base", "ECA 54 (2018)"],
+  cargaBase: ["img/carga-escudero.jpg", "Así llega la carga: la red con el equipaje, levantada en la base Prof. Julio Escudero (INACH), isla Rey Jorge", "ECA 54 (2018)"],
+  puerto: ["img/desembarco-zodiac.jpg", "Desembarco de equipos en la playa", "ECA 54 (2018)"],
+  glaciar: ["img/bahia-glaciar.jpg", "Bahía con glaciares, isla Rey Jorge", "ECA 54 (2018)"],
+  guia: ["img/clavelito-entre-pasto-d3100.jpg", "Así se ven en terreno: clavelito antártico (cojín) entre pasto antártico, isla Livingston", "ECA 53 (2017)"]
+};
+var FAUNA = [
+  ["img/pinguino-adelia-alas.jpg", "Pingüino adelia", "ECA 54 (2018)"],
+  ["img/pinguino-adelia-roca.jpg", "Pingüino adelia asomándose entre musgos", "ECA 54 (2018)"],
+  ["img/pinguino-adelia-mar.jpg", "Pingüino adelia en la orilla", "ECA 54 (2018)"],
+  ["img/elefante-marino.jpg", "Elefante marino bostezando", "ECA 54 (2018)"],
+  ["img/pinguinos-barbijo.jpg", "Pingüinos barbijo", "ECA 54 (2018)"],
+  ["img/pinguino-papua.jpg", "Pingüino papúa", "ECA 53 (2017)"]
+];
+var TVS = [
+  ["img/tv-musgo-tempanos-250mm.jpg", "¿Una Antártica más verde? Musgos y líquenes frente a témpanos en Lions Rump, isla Rey Jorge", "ECA 54 (2018)"],
+  ["img/tv-helicoptero-tempano.jpg", "Helicóptero sobre un témpano tabular", "ECA 53 (2017)"],
+  ["img/contenedor-barcaza.jpg", "Carga bajando desde el buque a una barcaza", "ECA 53 (2017)"],
+  ["img/carga-escudero.jpg", "Carga llegando a la base Prof. Julio Escudero (INACH), isla Rey Jorge", "ECA 54 (2018)"],
+  ["img/tv-tempanos-costa.jpg", "Témpanos frente a la costa, isla Rey Jorge", "ECA 54 (2018)"],
+  ["img/pinguino-adelia-alas.jpg", "Pingüino adelia", "ECA 54 (2018)"],
+  ["img/tv-bahia-lobo-fino.jpg", "Lobo fino sobre musgos, isla Livingston", "ECA 53 (2017)"],
+  ["img/tv-buque-tempanos.jpg", "Buque de apoyo entre témpanos", "ECA 54 (2018)"],
+  ["img/elefante-marino.jpg", "Elefante marino bostezando", "ECA 54 (2018)"],
+  ["img/tv-tempano-dorado.jpg", "Témpano al atardecer", "ECA 53 (2017)"],
+  ["img/tv-liquen-naranja.jpg", "Líquenes naranjos sobre roca", "ECA 54 (2018)"],
+  ["img/pinguinos-barbijo.jpg", "Pingüinos barbijo", "ECA 54 (2018)"]
+];
+function credit(ph){ return ph[1] + ". Foto: Gabriel Ballesteros, " + ph[2]; }
+function setFig(fig, img, cap, ph){
+  if (!ph){ fig.hidden = true; return; }
+  img.src = ph[0]; img.alt = ph[1]; cap.textContent = credit(ph); fig.hidden = false;
+}
+function realFig(ph){
+  var f = document.createElement("figure"); f.className = "ph";
+  var i = document.createElement("img"); i.src = ph[0]; i.alt = ph[1]; i.loading = "lazy"; f.appendChild(i);
+  var c = document.createElement("figcaption"); c.textContent = credit(ph); f.appendChild(c);
+  return f;
+}
+var slideT = null, slideI = 0;
+function startSlides(){
+  clearInterval(slideT);
+  slideT = setInterval(function(){
+    slideI = (slideI + 1) % TVS.length;
+    var img = $("#tvImg"), s = TVS[slideI];
+    img.style.opacity = 0;
+    setTimeout(function(){ img.src = s[0]; img.alt = s[1]; $("#tvCap").textContent = credit(s); img.style.opacity = 1; }, 600);
+  }, 8000);
+}
+function intro(kicker, title, nodes, btnTxt, next, ph){
+  setFig($("#introFig"), $("#introImg"), $("#introCap"), ph);
+  $("#introKicker").textContent = kicker; $("#introTitle").textContent = title;
+  var b = $("#introBody"); b.innerHTML = ""; nodes.forEach(function(n){ b.appendChild(n); });
+  $("#btnIntro").textContent = btnTxt; $("#btnIntro").onclick = next;
+  show("intro");
+}
+var LONG = false; /* false = feria (corta); true = charla (completa, #charla) */
+function para(html){ var p = document.createElement("p"); p.innerHTML = html; return p; }
+function result(kicker, title, text, facts, next, btnTxt){
+  $("#resKicker").textContent = kicker; $("#resTitle").textContent = title; $("#resText").innerHTML = text;
+  var f = $("#resFacts"); f.innerHTML = ""; facts.forEach(function(n){ f.appendChild(n); });
+  $("#btnNext").textContent = btnTxt || "Siguiente"; $("#btnNext").onclick = next;
+  show("resultado");
+}
+
+function resetState(mode){
+  S.name = ($("#apodo").value || "").trim().slice(0, 16);
+  store("polizon_apodo", S.name);
+  S.mode = mode; S.cargoLeak = 0; S.cargoRight = 0;
+  S.score = 0; S.seedsFound = 0; S.invFound = 0; S.invTotal = 0; S.quizRight = 0; S.zone = 0;
+  $("#hudScore").textContent = "0";
+  S.t0 = Date.now(); jugada("inicio");
+}
+function startGame(){ resetState("mision"); introCarga(); }
+function startMini(n){
+  resetState("mini");
+  if (n === "0") introCarga();
+  else if (n === "1") introR1();
+  else if (n === "2"){ S.seedsFound = S.seedsTotal; introR2(); }
+  else startQuiz();
+}
+function introR1(){
+  intro(S.mode === "mini" ? "Minijuego" : "Ronda 2 de 4", "Control de bioseguridad", LONG ? [
+    para("Antes de bajar a tierra en la Antártica, una expedicionaria pasa por el control de bioseguridad. Revisa su ropa y su mochila y <strong>toca cada semilla</strong> que encuentres."),
+    para("Tienes 1 minuto. Cada toque en falso resta 2 puntos."),
+    para("<span class=\"small\">Pista: busca en las suelas, en los puños con velcro, en las bastas del pantalón y en la mochila.</span>")
+  ] : [
+    para("Antes de bajar a tierra, revisa a la expedicionaria: <strong>toca cada semilla</strong> escondida en su ropa y mochila. Tienes 1 minuto.")
+  ], "Revisar equipaje", round1, PH.puerto);
+}
+function round1(){
+  show("juego"); stageMode(true); $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 2 · ") + "Control de bioseguridad";
+  wrongPenalty = 2; drawPort($("#stage")); updatePrompt1();
+  onAllFound = endRound1; playing = true; startTimer(60, endRound1);
+}
+function endRound1(){
+  stopRound();
+  var miss = S.seedsTotal - S.seedsFound;
+  var txt = miss === 0 ? "¡Encontraste las 8 semillas! Ninguna polizona bajó a tierra." :
+    S.mode === "mini" ? "Encontraste " + S.seedsFound + " de 8 semillas. Las que se escapan bajan a tierra de polizonas." :
+    "Encontraste " + S.seedsFound + " de 8. <strong>" + miss + (miss === 1 ? " semilla bajó" : " semillas bajaron") + " a tierra de polizona" + (miss === 1 ? "" : "s") + "</strong>: en la próxima ronda tendrás que buscar las plantas que crecieron.";
+  result(S.mode === "mini" ? "Minijuego completo" : "Ronda 2 completa", "Puntaje: " + S.score, txt, LONG ? [
+    fact("Se revisó la ropa y el equipaje de visitantes de la Antártica en la temporada 2007/08. Hubo semillas en el 20 % de las muestras de turistas y en el 45 % de las de personas científicas. Lo más riesgoso: calzado, pantalones y mochilas.", ["huiskes"]),
+    fact("Entre quienes llevaban semillas, el promedio fue de 9,5 semillas por persona.", ["chown"])
+  ] : [
+    fact("En la ropa y el equipaje de visitantes a la Antártica había semillas en el 20 % de las muestras de turistas y en el 45 % de las de científicos.", ["huiskes"])
+  ], S.mode === "mini" ? finish : introR2, S.mode === "mini" ? "Ver mi puntaje" : "Siguiente");
+}
+function introR2(){
+    var guide = document.createElement("div"); guide.className = "guide";
+    guide.appendChild(guideCard("Pasto antártico", "Deschampsia antarctica", "nat", "Nativa", "Hojas finas y tiesas, como agujas, hacia arriba.", deschampsia));
+    guide.appendChild(guideCard("Clavelito antártico", "Colobanthus quitensis", "nat", "Nativa", "Cojín redondo y apretado, pegado al suelo.", colobanthus));
+    guide.appendChild(guideCard("Poa anual", "Poa annua", "inv", "Invasora", "Hojas anchas, blandas y caídas. Espigas blancas en la punta.", poa));
+    intro(S.mode === "mini" ? "Minijuego" : "Ronda 3 de 4", "¿Quién es el invasor?", [
+      para("En la Antártica viven solo <strong>dos plantas con flor nativas</strong>. Cualquier otro pasto es sospechoso. <strong>Fíjate en la forma</strong>, no en el color."),
+      guide,
+      para("Toca solo las <strong>Poa annua</strong>. Si tocas una planta nativa pierdes 5 puntos. " + (LONG ? "Son 2 zonas de 40 segundos." : "Tienes 40 segundos.")),
+      para("<span class=\"small\">En terreno es más difícil: estas plantas se parecen mucho y las confirma una persona experta.</span>")
+    ], LONG ? "Ir a la zona 1" : "Buscar invasoras", function(){ round2(0); }, PH.guia);
+}
+function guideCard(nombre, sci, cls, tagTxt, desc, drawFn){
+  var c = document.createElement("div"); c.className = "card" + (cls === "inv" ? " inv" : "");
+  var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "-22 -30 44 38"); svg.setAttribute("aria-hidden", "true");
+  drawFn(svg, 0, 0, 1);
+  c.appendChild(svg);
+  var t = document.createElement("span"); t.className = "tag " + cls; t.textContent = tagTxt; c.appendChild(t);
+  var h = document.createElement("h3"); h.textContent = nombre; h.style.fontSize = ".95rem"; c.appendChild(h);
+  var s = document.createElement("p"); s.className = "sci"; s.textContent = sci; c.appendChild(s);
+  var d = document.createElement("p"); d.textContent = desc; c.appendChild(d);
+  return c;
+}
+function round2(zi){
+  S.zone = zi; var z = ZONAS[zi];
+  var extra = Math.min(LONG ? 5 : 3, Math.ceil((S.seedsTotal - S.seedsFound) / 2) + (S.cargoLeak || 0));
+  var n = zi === 0 ? 4 + extra : 4;
+  show("juego"); stageMode(true); $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 3 · ") + (LONG ? z.titulo : "Alrededores de la base");
+  wrongPenalty = 2; zoneFound0 = S.invFound;
+  zoneInv = drawScene($("#stage"), z.id, n); S.invTotal += zoneInv; updatePrompt2();
+  onAllFound = function(){ nextZone(zi); }; playing = true; startTimer(z.seg, function(){ nextZone(zi); });
+}
+function nextZone(zi){
+  stopRound();
+  if (zi === 0 && LONG){
+    var f = S.invFound - zoneFound0;
+    intro(S.mode === "mini" ? "Minijuego · Zona 2" : "Ronda 3 · Zona 2", "Frente de un glaciar", [
+      para("En la zona 1 encontraste " + f + " de " + zoneInv + " invasoras."),
+      para("Cuando el hielo retrocede queda suelo nuevo y desnudo. Las primeras plantas en llegar pueden ser nativas o invasoras. Sigue el rastro de pisadas.")
+    ], "Ir a la zona 2", function(){ round2(1); }, PH.glaciar);
+    return;
+  }
+  result(S.mode === "mini" ? "Minijuego completo" : "Ronda 3 completa", "Puntaje: " + S.score, "Encontraste " + S.invFound + " de " + S.invTotal + " plantas invasoras.", !LONG ? [
+    fact("Poa annua es la única planta con flor exótica que logró reproducirse en la Antártica marítima. Crece mejor donde el suelo fue pisoteado, cerca de bases y senderos.", ["chwed", "molina14"])
+  ] : [
+    fact("Solo entre el 2 % y el 3 % de la superficie antártica permite que crezcan plantas, en sitios con nutrientes que aportan aves y mamíferos.", ["inach"]),
+    fact("Poa annua es la única planta con flor exótica que formó una población que se reproduce en la Antártica marítima. Se vio por primera vez en 1953.", ["chwed"]),
+    fact("Crece mejor donde el suelo fue pisoteado o removido: allí su sobrevivencia fue 33 % mayor. Por eso aparece cerca de bases y senderos.", ["molina14"]),
+    fact("Sus semillas traen hongos endófitos que la ayudan a germinar, sobrevivir y competir con las plantas nativas. Es la estrategia del “caballo de Troya”, estudiada en la UTalca.", ["molina23"]),
+    fact("En experimentos en terreno, Poa annua compitió con el pasto antártico y el clavelito antártico y afectó su crecimiento y sobrevivencia.", ["molina19"]),
+    fact("Para eliminarla hay que sacar la planta junto con su suelo, porque deja miles de semillas enterradas: cerca de 5.000 por metro cuadrado junto a una base.", ["wodk", "galera"])
+  ], S.mode === "mini" ? finish : startQuiz, S.mode === "mini" ? "Ver mi puntaje" : "Ronda 4: ¿qué harías tú?");
+}
+
+/* ---------- Ronda 1: control de carga (¿pasa o no pasa?) ---------- */
+function stageMode(on){ $("#stageWrap").hidden = !on; $("#swipe").hidden = on; }
+var ITEMS = [
+  { e: "🥾", t: "Botas lavadas, con la suela revisada", ok: "pasa", r: "Botas limpias: sin barro ni semillas." },
+  { e: "🥫", t: "Conservas en latas selladas", ok: "pasa", r: "Envase cerrado y limpio: no lleva tierra." },
+  { e: "🧥", t: "Parka nueva, recién sacada de su bolsa", ok: "pasa", r: "Ropa nueva y limpia: sin semillas." },
+  { e: "💻", t: "Notebook guardado en su funda", ok: "pasa", r: "Equipo limpio y protegido." },
+  { e: "🎒", t: "Mochila aspirada por dentro y por fuera", ok: "pasa", r: "Aspirar costuras y bolsillos saca las semillas." },
+  { e: "🍝", t: "Fideos en paquetes sellados", ok: "pasa", r: "Alimento seco y envasado: bajo riesgo." },
+  { e: "🧦", t: "Calcetines de lana con semillas pegadas", ok: "revisar", r: "Los calcetines enganchan muchas semillas." },
+  { e: "🌱", t: "Una plantita en macetero, de regalo para la base", ok: "revisar", r: "No se permite llevar plantas no nativas ni tierra a la Antártica." },
+  { e: "🥬", t: "Lechugas con tierra en las raíces", ok: "revisar", r: "La tierra de los alimentos puede traer semillas y bichos." },
+  { e: "🥾", t: "Botas con barro seco en la suela", ok: "revisar", r: "El barro de la suela esconde semillas." },
+  { e: "👖", t: "Pantalón usado para caminar por un campo de trigo", ok: "revisar", r: "Quien estuvo en zonas agrícolas lleva más semillas." },
+  { e: "📦", t: "Cajas guardadas en una bodega rodeada de pasto", ok: "revisar", r: "La carga también transporta semillas." },
+  { e: "🍎", t: "Fruta fresca con hojas y bichitos", ok: "revisar", r: "Frutas y verduras frescas pueden traer insectos y hongos." },
+  { e: "📷", t: "Trípode de cámara con tierra en las patas", ok: "revisar", r: "Los equipos de terreno con tierra hay que limpiarlos." }
+];
+var deck = [], di = 0, dragging = null;
+function introCarga(){
+  intro(S.mode === "mini" ? "Minijuego" : "Ronda 1 de 4", "¿Pasa o no pasa?", !LONG ? [
+    para("Llega carga para una base antártica. Desliza a la derecha si <strong>pasa</strong> y a la izquierda si hay que <strong>revisarla</strong> porque puede traer semillas, tierra o bichos. Tienes 2 minutos para 6 tarjetas: piénsalo con calma.")
+  ] : [
+    para("Estás en el control de carga de un barco que va a la Antártica. Llegan cosas para la base: decide si <strong>pasan</strong> o si hay que <strong>revisarlas</strong> porque pueden traer semillas, tierra o bichos."),
+    para("Desliza la tarjeta a la derecha si <strong>pasa</strong> y a la izquierda si hay que <strong>revisar</strong>. También puedes usar los botones. Tienes 4 minutos para 8 tarjetas.")
+  ], "Abrir el control", roundCarga, PH.carga);
+}
+function roundCarga(){
+  show("juego"); stageMode(false);
+  $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 1 · ") + "Control de carga";
+  var half = LONG ? 4 : 3;
+  var ok = shuffle(ITEMS.filter(function(i){ return i.ok === "pasa"; })).slice(0, half);
+  var bad = shuffle(ITEMS.filter(function(i){ return i.ok === "revisar"; })).slice(0, half);
+  deck = shuffle(ok.concat(bad)); di = 0; S.cargoRight = 0; S.cargoLeak = 0;
+  updatePromptC(); playing = true; renderCard(); startTimer(deck.length * (LONG ? 30 : 20), endCarga);
+}
+function updatePromptC(){ $("#hudPrompt").innerHTML = "Tarjeta <b>" + Math.min(di + 1, deck.length) + " / " + deck.length + "</b>"; }
+function renderCard(){
+  var d = $("#deck"); d.innerHTML = "";
+  if (di >= deck.length) return;
+  var it = deck[di], c = document.createElement("div"); c.className = "icard";
+  c.innerHTML = '<span class="stamp st-rev">REVISAR</span><span class="stamp st-pas">PASA</span><span class="em" aria-hidden="true"></span><span class="nm"></span>';
+  c.querySelector(".em").textContent = it.e; c.querySelector(".nm").textContent = it.t;
+  c.addEventListener("pointerdown", function(e){
+    if (!playing) return;
+    dragging = { x: e.clientX, id: e.pointerId, dx: 0 };
+    try { c.setPointerCapture(e.pointerId); } catch(err){}
+    c.style.transition = "none";
+  });
+  c.addEventListener("pointermove", function(e){
+    if (!dragging || dragging.id !== e.pointerId) return;
+    var dx = e.clientX - dragging.x; dragging.dx = dx;
+    c.style.transform = "translateX(" + dx + "px) rotate(" + (dx / 14) + "deg)";
+    c.querySelector(".st-pas").style.opacity = Math.max(0, dx / 90);
+    c.querySelector(".st-rev").style.opacity = Math.max(0, -dx / 90);
+  });
+  function release(e){
+    if (!dragging || dragging.id !== e.pointerId) return;
+    var dx = dragging.dx; dragging = null; c.style.transition = "";
+    if (Math.abs(dx) > 80) decide(dx > 0 ? "pasa" : "revisar");
+    else { c.style.transform = ""; c.querySelectorAll(".stamp").forEach(function(s){ s.style.opacity = 0; }); }
+  }
+  c.addEventListener("pointerup", release); c.addEventListener("pointercancel", release);
+  d.appendChild(c);
+}
+function decide(choice){
+  if (!playing || di >= deck.length) return;
+  var it = deck[di], good = choice === it.ok, c = $("#deck .icard");
+  if (good){ setScore(10); S.cargoRight++; } else { setScore(-5); if (it.ok === "revisar") S.cargoLeak++; }
+  toast((good ? "¡Bien! " : "¡Ups! ") + it.r);
+  if (c){ var dir = choice === "pasa" ? 1 : -1; c.style.transform = "translateX(" + (dir * 130) + "%) rotate(" + (dir * 18) + "deg)"; c.style.opacity = "0"; }
+  di++; updatePromptC();
+  setTimeout(function(){
+    if (di >= deck.length){
+      if (!playing) return;
+      var bonus = Math.min(20, Math.round(timeLeft())); stopRound();
+      if (bonus > 0){ setScore(bonus); toast("¡Carga lista! Bono de tiempo +" + bonus); }
+      setTimeout(endCarga, 900);
+    } else renderCard();
+  }, 260);
+}
+function endCarga(){
+  stopRound();
+  for (var k = di; k < deck.length; k++) if (deck[k].ok === "revisar") S.cargoLeak++;
+  di = deck.length; $("#deck").innerHTML = "";
+  var mini = S.mode === "mini";
+  var txt = "Clasificaste bien " + S.cargoRight + " de " + deck.length + " cosas.";
+  if (S.cargoLeak > 0) txt += " <strong>" + S.cargoLeak + (S.cargoLeak === 1 ? " cosa con tierra o semillas pasó" : " cosas con tierra o semillas pasaron") + " el control</strong>" + (mini ? "." : ": lo que traían aparecerá en la ronda de invasores.");
+  else txt += " Nada riesgoso pasó el control.";
+  result(mini ? "Minijuego completo" : "Ronda 1 completa", "Puntaje: " + S.score, txt, [
+    realFig(PH.cargaBase)
+  ].concat(!LONG ? [
+    fact("De más de 11.250 frutas y verduras enviadas a bases antárticas, el 12 % traía tierra pegada.", ["hughes11"])
+  ] : [
+    fact("Se revisaron más de 11.250 frutas y verduras enviadas a estaciones antárticas: el 12 % traía tierra pegada y se encontraron insectos, sobre todo en las verduras de hoja.", ["hughes11"]),
+    fact("Con el equipaje y la carga de un solo programa antártico llegan más de 1.400 semillas de 99 tipos de plantas por temporada, y entre el 30 % y el 50 % puede caer al suelo.", ["lee09"])
+  ]), mini ? finish : introR1, mini ? "Ver mi puntaje" : "Siguiente");
+}
+$("#btnPas").onclick = function(){ decide("pasa"); };
+$("#btnRev").onclick = function(){ decide("revisar"); };
+document.addEventListener("keydown", function(e){
+  if ($("#swipe").hidden || !playing) return;
+  if (e.key === "ArrowRight") decide("pasa");
+  else if (e.key === "ArrowLeft") decide("revisar");
+});
+
+/* ---------- Ronda 4: quiz ---------- */
+var QUIZ = [
+  { q: "Antes de viajar a la Antártica, ¿qué haces con tus botas?",
+    ok: "Las lavo y reviso la suela con un cepillo",
+    no: ["Las dejo con barro, así se ven de expedición", "Nada, solo les saco brillo"],
+    fb: "Las botas y la ropa de campo son de lo que más semillas lleva. Limpiar suelas y revisar la ropa antes de viajar corta el camino de las polizonas.", src: ["huiskes"] },
+  { q: "¿Qué partes de la ropa juntan más semillas?",
+    ok: "Los puños con velcro, las bastas y los calcetines",
+    no: ["El gorro", "Los lentes de sol"],
+    fb: "El velcro, los puños, los pantalones impermeables y los calcetines enganchan muchas semillas.", src: ["whinam", "lee"] },
+  { q: "Encuentras una planta rara cerca de una base antártica. ¿Qué haces?",
+    ok: "La fotografío, anoto dónde está y aviso al equipo",
+    no: ["La arranco y la tiro lejos", "Me llevo unas semillas de recuerdo"],
+    fb: "Avisar rápido permite sacarla bien, con su suelo, antes de que se extienda. Arrancarla a medias o mover sus semillas la puede esparcir.", src: ["galera"] }
+];
+QUIZ = QUIZ.concat([
+  { q: "¿Cuántas plantas con flor nativas tiene la Antártica?",
+    ok: "Dos: el pasto antártico y el clavelito antártico",
+    no: ["Más de cien", "Ninguna, solo hay hielo"],
+    fb: "Solo dos plantas con flor crecen naturalmente en la Antártica. Por eso cualquier otra planta con flor es una alerta.", src: ["inach"] },
+  { q: "¿Por qué Poa annua aparece más cerca de las bases y senderos?",
+    ok: "Porque el suelo pisoteado o removido la ayuda a establecerse",
+    no: ["Porque le gusta el ruido de las bases", "Porque alguien la riega"],
+    fb: "Donde el suelo fue pisoteado o removido, Poa annua sobrevivió 33 % más. Las nativas no se benefician igual.", src: ["molina14"] },
+  { q: "¿Qué ayuda a Poa annua a germinar y sobrevivir en la Antártica?",
+    ok: "Hongos endófitos que viajan dentro de sus semillas",
+    no: ["Fertilizante que traen los turistas", "El calor de los pingüinos"],
+    fb: "Las semillas de Poa annua antárticas traen hongos endófitos que las ayudan a germinar, sobrevivir y competir. Es el “caballo de Troya” estudiado en la UTalca.", src: ["molina23"] },
+  { q: "¿Qué les pasa a las plantas nativas antárticas cuando los veranos se calientan?",
+    ok: "Se expanden y cubren más terreno",
+    no: ["Desaparecen de inmediato", "No cambian en nada"],
+    fb: "Con 1,2 °C más en verano, el pasto antártico aumentó su cobertura 191 % y el clavelito antártico 208 %. El calor también abre la puerta a las invasoras.", src: ["cannone"] },
+  { q: "Entre quienes llevan semillas a la Antártica, ¿cuántas cargan en promedio?",
+    ok: "Cerca de 10 por persona",
+    no: ["Ninguna, el viento las limpia", "Más de mil por persona"],
+    fb: "En promedio fueron 9,5 semillas por persona. Las personas científicas llevaban más que los turistas.", src: ["chown"] },
+  { q: "¿Qué zona de la Antártica corre más riesgo de invasión de plantas?",
+    ok: "La península Antártica",
+    no: ["El Polo Sur", "El centro del continente"],
+    fb: "La península Antártica tiene el clima menos extremo, y ahí es donde más probablemente se establecen especies exóticas. Con el calentamiento, el riesgo aumenta.", src: ["chown"] },
+  { q: "Las frutas y verduras frescas que llegan a las bases antárticas…",
+    ok: "Pueden traer tierra e insectos escondidos",
+    no: ["Siempre llegan esterilizadas", "No tienen ningún riesgo"],
+    fb: "De más de 11.250 frutas y verduras revisadas, el 12 % traía tierra pegada y hubo insectos, sobre todo en las verduras de hoja.", src: ["hughes11"] },
+  { q: "¿Por qué es difícil eliminar Poa annua una vez que se instala?",
+    ok: "Porque deja miles de semillas enterradas en el suelo",
+    no: ["Porque es venenosa", "Porque se esconde bajo el hielo"],
+    fb: "Junto a una base antártica se contaron cerca de 5.000 semillas por metro cuadrado de suelo: aunque saques la planta, el suelo puede volver a brotar.", src: ["wodk"] },
+  { q: "Con el calentamiento, ¿cómo se verá la Antártica en el futuro?",
+    ok: "Más verde, con más musgos y plantas",
+    no: ["Más blanca, con más hielo", "Exactamente igual que hoy"],
+    fb: "Con veranos más cálidos se espera una Antártica más verde. Los satélites ya muestran más verde en la península, aunque los científicos aún discuten cuán rápido. Ese suelo verde nuevo también lo pueden aprovechar las invasoras.", src: ["roland", "colesie"] }
+]);
+var QPICS = FAUNA.concat(TVS.slice(1));
+var QSET = [], qi = 0;
+function startQuiz(){ QSET = shuffle(QUIZ.slice()).slice(0, LONG ? 4 : 2); qi = 0; renderQ(); }
+function renderQ(){
+  var Q = QSET[qi];
+  setFig($("#quizFig"), $("#quizImg"), $("#quizCap"), pick(QPICS));
+  $("#quizKicker").textContent = (S.mode === "mini" ? "Minijuego" : "Ronda 4") + " · Pregunta " + (qi + 1) + " de " + QSET.length;
+  $("#quizScore").textContent = S.score;
+  $("#quizQ").textContent = Q.q;
+  var box = $("#quizOpts"); box.innerHTML = "";
+  $("#quizFb").hidden = true; $("#btnQuiz").hidden = true;
+  shuffle([Q.ok].concat(Q.no)).forEach(function(txt){
+    var b = document.createElement("button"); b.className = "opt"; b.type = "button"; b.textContent = txt;
+    b.onclick = function(){
+      box.querySelectorAll(".opt").forEach(function(o){ o.disabled = true; if (o.textContent === Q.ok) o.classList.add("right"); });
+      var good = txt === Q.ok;
+      if (good){ S.score += 20; S.quizRight++; } else b.classList.add("wrong");
+      $("#quizScore").textContent = S.score;
+      var fb = $("#quizFb"); fb.innerHTML = "";
+      var p = document.createElement("p"); p.innerHTML = (good ? "<strong>¡Correcto! +20.</strong> " : "<strong>Casi.</strong> ") ; p.appendChild(document.createTextNode(Q.fb)); fb.appendChild(p);
+      var s = document.createElement("p"); s.className = "src"; s.textContent = "Fuente: " + Q.src.map(cite).join("; "); fb.appendChild(s);
+      fb.hidden = false;
+      $("#btnQuiz").textContent = qi < QSET.length - 1 ? "Siguiente pregunta" : "Ver mi puntaje";
+      $("#btnQuiz").hidden = false;
+    };
+    box.appendChild(b);
+  });
+  show("quiz");
+}
+$("#btnQuiz").onclick = function(){ qi++; if (qi < QSET.length) renderQ(); else finish(); };
+
+/* ---------- Final ---------- */
+function rankOf(sc){
+  var t = LONG ? [380, 280, 180] : [240, 180, 110];
+  if (sc >= t[0]) return "Leyenda del Polo Sur";
+  if (sc >= t[1]) return "Guardián/a de la Antártica";
+  if (sc >= t[2]) return "Inspector/a de expedición";
+  return "Aprendiz de bioseguridad";
+}
+function finish(){
+  $("#finName").textContent = S.name ? S.name : "Guardián/a anónimo/a";
+  $("#finScore").textContent = S.score;
+  setFig($("#finFig"), $("#finImg"), $("#finCap"), pick(FAUNA));
+  $("#finRank").textContent = rankOf(S.score);
+  var mini = S.mode === "mini";
+  $("#finKicker").textContent = mini ? "Minijuego terminado" : "Misión cumplida";
+  $("#finBoard").hidden = mini || LONG; $("#finRank").hidden = mini; $("#finMini").hidden = !mini;
+  $("#finMini").textContent = mini ? "Este fue un minijuego. Juega la Misión completa para obtener tu rango." : "";
+  jugada("fin");
+  show("final");
+}
+(function(){
+  var ol = $("#refs");
+  Object.keys(REFS).forEach(function(k){
+    var li = document.createElement("li"); li.appendChild(document.createTextNode(REFS[k][0] + " "));
+    if (REFS[k][1]){ var a = document.createElement("a"); a.href = "https://doi.org/" + REFS[k][1]; a.target = "_blank"; a.rel = "noopener"; a.textContent = "doi:" + REFS[k][1]; li.appendChild(a); }
+    ol.appendChild(li);
+  });
+})();
+
+/* ---------- Portada ---------- */
+(function(){
+  var s = $("#heroArt");
+  el("rect", { x: 0, y: 0, width: 360, height: 170, fill: "#cfe1ec" }, s);
+  el("path", { d: "M0 92 L40 60 L70 80 L110 40 L150 78 L190 52 L230 84 L270 46 L320 82 L360 64 V110 H0 Z", fill: "#f4f8fb", stroke: "#b9d2e2" }, s);
+  el("rect", { x: 0, y: 108, width: 360, height: 62, fill: "#1d5a7a" }, s);
+  for (var i = 0; i < 9; i++) el("path", { d: "M" + (i * 42) + " " + (126 + (i % 3) * 12) + " q10 -5 20 0", stroke: "#3f7ea0", "stroke-width": 2, fill: "none" }, s);
+  el("path", { d: "M120 112 H270 L254 138 H134 Z", fill: "#c63b2b" }, s);
+  el("rect", { x: 160, y: 92, width: 62, height: 20, fill: "#eef4f7" }, s);
+  el("rect", { x: 196, y: 78, width: 10, height: 14, fill: "#10283a" }, s);
+  [168, 180, 210].forEach(function(x){ el("rect", { x: x, y: 98, width: 7, height: 6, fill: "#1d5a7a" }, s); });
+  [[150, 128], [232, 124], [246, 132], [140, 120]].forEach(function(p){ drawSeed(s, p[0], p[1]); });
+  el("circle", { cx: 304, cy: 34, r: 14, fill: "#f6e6a8" }, s);
+})();
+
+/* ---------- Pantalla TV ---------- */
+function qrUrl(){ return store("polizon_qr_url") || (location.protocol === "file:" ? PUBLIC_URL : location.href.split("#")[0]); }
+function renderQR(){
+  var box = $("#qr"); box.innerHTML = ""; $("#qrUrl").value = qrUrl();
+  if (typeof QRCode === "undefined"){ box.textContent = "Sin conexión para generar el QR"; $("#qrMsg").textContent = "Enlace: " + qrUrl(); return; }
+  new QRCode(box, { text: qrUrl(), width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+}
+$("#btnQr").onclick = function(){ var v = $("#qrUrl").value.trim(); if (v) store("polizon_qr_url", v); renderQR(); $("#qrMsg").textContent = "QR actualizado."; };
+document.getElementById("qrlib").addEventListener("load", function(){ if (location.hash === "#tv") renderQR(); });
+
+/* Antártica 2100: animación automática de 30 s */
+var futRng = seeded(2100), FUT = [];
+for (var fi = 0; fi < 70; fi++) FUT.push({ x: 20 + futRng() * 360, y: 150 + futRng() * 80, s: 0.8 + futRng() * 0.5, r: futRng() });
+FUT.sort(function(a, b){ return a.y - b.y; });
+var PLANT_IMG = { d: ["img/planta-deschampsia.png", 143 / 160, 30], c: ["img/planta-colobanthus.png", 234 / 160, 17], p: ["img/planta-poa.png", 131 / 160, 30] }, PLANT_OK = {};
+Object.keys(PLANT_IMG).forEach(function(k){ var im = new Image(); im.onload = function(){ PLANT_OK[k] = true; }; im.src = PLANT_IMG[k][0]; });
+function futPlant(svg, k, x, y, s){
+  if (!PLANT_OK[k]){ ({ d: deschampsia, c: colobanthus, p: poa })[k](svg, x, y, s); return; }
+  var h = PLANT_IMG[k][2] * s, w = h * PLANT_IMG[k][1];
+  el("image", { href: PLANT_IMG[k][0], x: x - w / 2, y: y - h, width: w, height: h }, svg);
+}
+var SCN = { fondo: "img/tv-fondo-antartica.jpg", glaciar: "img/tv-glaciar.png" }, SCN_OK = {};
+Object.keys(SCN).forEach(function(k){ var im = new Image(); im.onload = function(){ SCN_OK[k] = true; }; im.src = SCN[k]; });
+var GL_ZIG = [0, -0.7, 0.5, -0.3, 0.9, -0.9, 0.4, -0.6, 0.8, -0.2, 0.6, -0.8, 0.2, -0.4, 0.7, -0.5];
+var SHORE = [[130, 362], [140, 305], [148, 298], [170, 318], [182, 345], [195, 375], [205, 402], [240, 410]];
+function shoreX(y){
+  if (!SCN_OK.fondo) return 330;
+  if (y <= SHORE[0][0]) return SHORE[0][1];
+  for (var i = 1; i < SHORE.length; i++) if (y <= SHORE[i][0]){ var a = SHORE[i - 1], b = SHORE[i]; return a[1] + (b[1] - a[1]) * (y - a[0]) / (b[0] - a[0]); }
+  return 410;
+}
+function drawFuture(T, nNat, nInv, ships, label){
+  var svg = $("#futureSvg"); svg.innerHTML = "";
+  var gx = 262 - T * 180;
+  el("rect", { x: 0, y: 0, width: 450, height: 240, fill: "#cfe1ec" }, svg);
+  if (SCN_OK.fondo) el("image", { href: SCN.fondo, x: 0, y: 0, width: 400, height: 240, preserveAspectRatio: "none" }, svg);
+  else {
+    el("path", { d: "M0 90 L50 50 L90 74 L140 30 L190 70 L240 44 L290 78 L340 40 L400 70 V140 H0 Z", fill: "#dfe8ef", stroke: "#b9cfdc" }, svg);
+    el("rect", { x: 0, y: 132, width: 400, height: 108, fill: "#8b7d70" }, svg);
+    el("path", { d: "M330 132 Q350 190 320 240 H400 V132 Z", fill: "#1d5a7a" }, svg);
+  }
+  if (SCN_OK.glaciar){
+    // el glaciar queda fijo y se borra desde el frente (derecha) con un borde irregular de hielo que se derrite
+    var gw = 320, gh = 128, edge = gx + 24 * Math.max(0, 1 - T * 6), amp = Math.min(1, T * 6) * 7, defs = el("defs", {}, svg), cp = el("clipPath", { id: "glClip" }, defs), pts = "-60,90 " + edge + ",90";
+    for (var zy = 100; zy <= 250; zy += 10) pts += " " + (edge + amp * GL_ZIG[Math.round(zy / 10) % GL_ZIG.length]) + "," + zy;
+    el("polygon", { points: pts + " -60,250" }, cp);
+    el("image", { href: SCN.glaciar, x: 262 - gw * 0.93, y: 241 - gh, width: gw, height: gh, preserveAspectRatio: "none", "clip-path": "url(#glClip)" }, svg);
+  }
+  else el("path", { d: "M0 118 H" + gx + " Q" + (gx + 18) + " 180 " + (gx - 6) + " 240 H0 Z", fill: "#eef6fa", stroke: "#bcd6e5", "stroke-width": 2 }, svg);
+  var gmin = gx + (SCN_OK.glaciar ? 26 : 14);
+  var cN = 0, cI = 0;
+  FUT.forEach(function(p){
+    if (p.x < gmin || p.x > shoreX(p.y) - 10 || p.r >= 0.62) return;
+    if (cN < Math.ceil(nNat)){ var g = cN + 1 > nNat ? nNat - cN : 1; futPlant(svg, p.r < 0.4 ? "d" : "c", p.x, p.y, 1.3 * p.s * (0.3 + 0.7 * g)); cN++; }
+  });
+  FUT.slice().sort(function(a, b){ return b.x - a.x; }).forEach(function(p){
+    if (p.x < gmin || p.x > shoreX(p.y) - 10 || p.r < 0.62) return;
+    if (cI < Math.ceil(nInv)){ var g = cI + 1 > nInv ? nInv - cI : 1; var ps = 1.3 * p.s * (0.3 + 0.7 * g); futPlant(svg, "p", p.x, p.y, ps); el("ellipse", { cx: p.x, cy: p.y - 15 * ps, rx: 10 * ps, ry: 14 * ps, fill: "none", stroke: "#d23c2a", "stroke-width": 1.6 }, svg); cI++; }
+  });
+  // leyenda
+  el("rect", { x: 240, y: 8, width: 150, height: 34, rx: 6, fill: "#ffffff", opacity: 0.9 }, svg);
+  el("circle", { cx: 252, cy: 18, r: 5, fill: "#5a7a3a" }, svg);
+  el("text", { x: 262, y: 22, "font-size": 10, "font-weight": 700, fill: "#16324a", "font-family": "Bricolage Grotesque, sans-serif" }, svg).textContent = "Plantas nativas";
+  el("ellipse", { cx: 252, cy: 33, rx: 5, ry: 6, fill: "none", stroke: "#d23c2a", "stroke-width": 2 }, svg);
+  el("text", { x: 262, y: 37, "font-size": 10, "font-weight": 700, fill: "#16324a", "font-family": "Bricolage Grotesque, sans-serif" }, svg).textContent = "Invasora: Poa annua";
+  // termómetro
+  el("rect", { x: 400, y: 0, width: 50, height: 240, fill: "#f4f1ea" }, svg);
+  el("rect", { x: 418, y: 34, width: 14, height: 172, rx: 7, fill: "#ffffff", stroke: "#33414d", "stroke-width": 2 }, svg);
+  var lvl = 18 + T * 150;
+  el("rect", { x: 421, y: 206 - lvl, width: 8, height: lvl, rx: 4, fill: "#d23c2a" }, svg);
+  el("circle", { cx: 425, cy: 214, r: 13, fill: "#d23c2a", stroke: "#33414d", "stroke-width": 2 }, svg);
+  for (var t = 0; t < 6; t++) el("line", { x1: 432, y1: 60 + t * 27, x2: 438, y2: 60 + t * 27, stroke: "#33414d", "stroke-width": 1.5 }, svg);
+  el("text", { x: 425, y: 24, "text-anchor": "middle", "font-size": 10, "font-weight": 800, fill: "#d23c2a", "font-family": "Bricolage Grotesque, sans-serif" }, svg).textContent = "calor";
+  // año
+  var yt = el("text", { x: 14, y: 40, "font-size": 34, "font-weight": 800, fill: "#16324a", stroke: "#ffffff", "stroke-width": 5, "paint-order": "stroke", "font-family": "Bricolage Grotesque, sans-serif" }, svg);
+  yt.textContent = label;
+}
+var FUT_CYCLE = 30, futT = 0, futLast = 0, futRaf = 0, futPrevCap = "";
+var FUT_REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+function ease(x){ return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+function futFrame(t){
+  var p = t < 4 ? 0 : t < 20 ? ease((t - 4) / 16) : 1;
+  var label = t < 4 ? "Hoy" : t < 20 ? String(Math.round(2026 + p * 74)) : "2100";
+  var nNat = 5 + 27 * Math.min(1, p / 0.8), nInv = p < 0.45 ? 0 : 6 * (p - 0.45) / 0.55;
+  var cap = t < 4 ? "Hoy el frío es una barrera fuerte. Hay poco suelo libre de hielo." :
+    t < 20 ? (p < 0.3 ? "Más calor: el hielo retrocede y queda suelo libre." : p < 0.55 ? "Las plantas nativas se expanden en el suelo nuevo." : "Llegan más personas… y en sus botas y equipaje, semillas polizonas de Poa annua.") :
+    "Una Antártica más verde, pero también con invasoras, si no cuidamos lo que llevamos.";
+  drawFuture(p, nNat, nInv, 0, label);
+  if (cap !== futPrevCap){ $("#futCap").textContent = cap; futPrevCap = cap; }
+  $("#futureSvg").style.opacity = t > 27.5 ? 0.25 : 1;
+}
+function futLoop(now){
+  futRaf = requestAnimationFrame(futLoop);
+  if (now - futLast < 100) return;
+  var dt = futLast ? Math.min(0.25, (now - futLast) / 1000) : 0; futLast = now;
+  futT = (futT + dt) % FUT_CYCLE;
+  futFrame(FUT_REDUCED ? [2, 14, 24][Math.floor(futT / 10)] : futT);
+}
+function citeP(k){ return "(" + cite(k).replace(/ \((\d{4})\)$/, " $1") + ")"; }
+function startFuture(){
+  $("#futureNote").textContent = "Simulación ilustrativa del escenario de mayor calentamiento: para 2100 podría haber cerca de 25 % más suelo sin hielo en la Antártica, sobre todo en la península Antártica " + citeP("lee17") + ". Con veranos más cálidos, el pasto antártico y el clavelito antártico ya aumentaron su cobertura desde los años 60 " + citeP("cannone") + ". Los satélites muestran una península más verde " + citeP("roland") + ", aunque aún se discute cuán rápido " + citeP("colesie") + ". El suelo nuevo también queda disponible para invasoras que llegan con las personas " + citeP("chown") + ".";
+  if (!futRaf){ futLast = 0; futRaf = requestAnimationFrame(futLoop); }
+}
+function stopFuture(){ if (futRaf){ cancelAnimationFrame(futRaf); futRaf = 0; } }
+
+/* ---------- Conteo de jugadas (local + GoatCounter opcional) ---------- */
+var GC_URL = "";  /* ej.: "https://CODIGO.goatcounter.com/count"; vacío = desactivado */
+var PUBLIC_URL = "https://gabo-ing.github.io/prisma-game/";
+function jugada(ev){
+  var rows = store("prisma_jugadas_v1") || [];
+  var dur = ev === "fin" && S.t0 ? Math.round((Date.now() - S.t0) / 1000) : "";
+  rows.push({ t: new Date().toISOString(), e: ev, m: S.mode + (LONG ? "-charla" : ""), d: dur, p: ev === "fin" ? S.score : "", c: location.protocol === "file:" ? "local" : "web" });
+  store("prisma_jugadas_v1", rows);
+  if (GC_URL && location.protocol !== "file:"){ try { new Image().src = GC_URL + "?p=" + encodeURIComponent("jugada-" + ev + "-" + S.mode) + "&e=true&rnd=" + Math.random(); } catch (e) {} }
+}
+function renderDatos(){
+  var rows = store("prisma_jugadas_v1") || [], ini = 0, fin = 0, dias = {}, tot = 0;
+  rows.forEach(function(r){ var d = r.t.slice(0, 10); dias[d] = dias[d] || [0, 0]; if (r.e === "inicio"){ ini++; dias[d][0]++; } else { fin++; dias[d][1]++; tot += +r.d || 0; } });
+  $("#datosResumen").innerHTML = "<p><b>" + ini + "</b> jugadas iniciadas · <b>" + fin + "</b> terminadas" + (fin ? " · duración media <b>" + Math.round(tot / fin) + " s</b>" : "") + "</p>";
+  $("#datosDias").textContent = Object.keys(dias).sort().map(function(d){ return d + ": " + dias[d][0] + " iniciadas, " + dias[d][1] + " terminadas"; }).join(" | ") || "Aún no hay jugadas registradas.";
+}
+$("#btnCsv").onclick = function(){
+  var rows = store("prisma_jugadas_v1") || [], out = ["fecha_hora_utc,evento,modo,duracion_s,puntos,canal"];
+  rows.forEach(function(r){ out.push([r.t, r.e, r.m, r.d, r.p, r.c].join(",")); });
+  var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out.join("\n")], { type: "text/csv" }));
+  a.download = "jugadas_polizon_" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+};
+$("#btnBorrar").onclick = function(){ if (confirm("¿Borrar todo el conteo de este navegador? Descarga el CSV antes.")){ store("prisma_jugadas_v1", []); renderDatos(); } };
+$("#btnVolver").onclick = function(){ location.hash = ""; };
+
+/* ---------- Ruteo ---------- */
+function route(){
+  var tv = location.hash === "#tv";
+  LONG = location.hash === "#charla";
+  $("#modeNote").textContent = LONG ? "Versión completa para charlas · 4 rondas · 6 a 9 minutos" : "4 rondas · 3 a 5 minutos";
+  $("#modeLink").textContent = LONG ? "Volver a la versión corta (feria)" : "¿Es para una charla o una clase? Abrir la versión completa";
+  $("#modeLink").setAttribute("href", LONG ? "#feria" : "#charla");
+  document.body.classList.toggle("tv", tv);
+  stopRound();
+  if (location.hash === "#datos"){ stopFuture(); renderDatos(); show("datos"); return; }
+  if (tv){ show("tv"); renderQR(); startFuture(); startSlides(); }
+  else { stopFuture(); show("inicio"); }
+}
+$("#btnStart").onclick = startGame;
+document.querySelectorAll("[data-mini]").forEach(function(b){ b.onclick = function(){ startMini(b.dataset.mini); }; });
+$("#btnAgain").onclick = function(){ show("inicio"); };
+$("#btnDemo").onclick = function(){ location.hash = ""; route(); };
+window.addEventListener("hashchange", route);
+var saved = store("polizon_apodo"); if (saved) $("#apodo").value = saved;
+route();
+})();
+</script>
