@@ -1135,7 +1135,7 @@ function stopFuture(){ if (futRaf){ cancelAnimationFrame(futRaf); futRaf = 0; } 
 
 /* ---------- Conteo de jugadas (local + GoatCounter opcional) ---------- */
 var GC_URL = "";  /* ej.: "https://CODIGO.goatcounter.com/count"; vacío = desactivado */
-var PUBLIC_URL = "https://gabo-ing.github.io/prisma-game/";
+var PUBLIC_URL = "https://gabo-ing.github.io/Prisma-Game/";
 function jugada(ev){
   var rows = store("prisma_jugadas_v1") || [];
   var dur = ev === "fin" && S.t0 ? Math.round((Date.now() - S.t0) / 1000) : "";
