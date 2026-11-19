@@ -110,6 +110,10 @@ body.tv #app{max-width:1400px}
   transition:transform .26s ease, opacity .26s ease;user-select:none;-webkit-user-select:none;cursor:grab}
 .icard .em{font-size:5.5rem;line-height:1}
 .icard .nm{font-family:var(--display);font-weight:800;font-size:1.45rem;text-wrap:balance}
+.hintrow{display:flex;align-items:center;gap:12px;padding-top:8px}
+.hintrow .btn{width:auto;padding:10px 16px}
+.hint-ring{fill:none;stroke:#e4552a;stroke-width:5;transform-box:fill-box;transform-origin:center;animation:hintpulse .8s ease-in-out infinite}
+@keyframes hintpulse{50%{stroke-opacity:.3;transform:scale(1.18)}}
 .belt-wrap{display:flex;flex-direction:column;gap:6px}
 .belt-lbl{display:flex;justify-content:space-between;font:800 .72rem var(--display);letter-spacing:.1em;color:var(--suave,#5b7385)}
 .belt{position:relative;height:178px;overflow:hidden;border-radius:14px;background:#d8e3ea;border:2px solid #aebdc7;touch-action:manipulation}
@@ -189,6 +193,7 @@ body.tv #app{max-width:1400px}
     <div class="hud-row"><span class="prompt" id="hudPrompt"></span><span class="small" id="hudTime"></span></div>
   </div>
   <div class="stage" id="stageWrap"><svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Escena de juego"></svg></div>
+  <div class="hintrow" id="hintRow" hidden><button class="btn sec" type="button" id="btnHint">💡 Pista (−5 puntos)</button><span class="small" id="hintLeft"></span></div>
   <div class="swipe" id="swipe" hidden>
     <div class="belt-wrap">
       <div class="belt-lbl"><span>ENTRADA</span><span>BASE ➜</span></div>
@@ -812,7 +817,7 @@ function introR2(){
     intro(S.mode === "mini" ? "Minijuego" : "Ronda 3 de 4", "¿Quién es el invasor?", [
       para("En la Antártica viven solo <strong>dos plantas con flor nativas</strong>. Cualquier otro pasto es sospechoso. <strong>Fíjate en la forma</strong>, no en el color."),
       guide,
-      para("Toca solo las <strong>Poa annua</strong>. Si tocas una planta nativa pierdes 5 puntos. " + (LONG ? "Son 2 zonas de 40 segundos." : "Tienes 40 segundos.")),
+      para("Toca solo las <strong>Poa annua</strong>. Si tocas una planta nativa pierdes 5 puntos. " + (LONG ? "Son 2 zonas de 40 segundos." : "Tienes 40 segundos.") + " Si te atascas, el botón <strong>Pista</strong> marca una Poa annua (cuesta 5 puntos; 2 por zona)."),
       para("<span class=\"small\">En terreno es más difícil: estas plantas se parecen mucho y las confirma una persona experta.</span>")
     ], LONG ? "Ir a la zona 1" : "Buscar invasoras", function(){ round2(0); }, PH.guia);
 }
@@ -832,7 +837,7 @@ function round2(zi){
   var extra = Math.min(LONG ? 5 : 3, Math.ceil((S.seedsTotal - S.seedsFound) / 2) + (S.cargoLeak || 0));
   var n = zi === 0 ? 4 + extra : 4;
   show("juego"); stageMode(true); $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 3 · ") + (LONG ? z.titulo : "Alrededores de la base");
-  wrongPenalty = 2; zoneFound0 = S.invFound;
+  wrongPenalty = 2; zoneFound0 = S.invFound; hintsLeft = 2; $("#hintRow").hidden = false; updateHint();
   zoneInv = drawScene($("#stage"), z.id, n); S.invTotal += zoneInv; updatePrompt2();
   onAllFound = function(){ nextZone(zi); }; playing = true; startTimer(z.seg, function(){ nextZone(zi); });
 }
@@ -859,7 +864,19 @@ function nextZone(zi){
 }
 
 /* ---------- Ronda 1: control de carga (¿pasa o no pasa?) ---------- */
-function stageMode(on){ $("#stageWrap").hidden = !on; $("#swipe").hidden = on; }
+function stageMode(on){ $("#stageWrap").hidden = !on; $("#swipe").hidden = on; $("#hintRow").hidden = true; }
+var hintsLeft = 0;
+function updateHint(){ $("#hintLeft").textContent = hintsLeft > 0 ? "Quedan " + hintsLeft : "Sin pistas"; $("#btnHint").disabled = hintsLeft <= 0; }
+$("#btnHint").onclick = function(){
+  if (!playing || hintsLeft <= 0) return;
+  var left = targets.filter(function(t){ return t.good && !t.found; });
+  if (!left.length) return;
+  var t = pick(left), svg = $("#stage"), k = vk(svg);
+  hintsLeft--; updateHint(); setScore(-5);
+  var ring = el("circle", { cx: t.x, cy: t.y, r: 34 * k, "class": "hint-ring", style: "stroke-width:" + (5 * k) + "px" }, svg);
+  toast("Pista: hay una Poa annua dentro del círculo naranja");
+  setTimeout(function(){ ring.remove(); }, 2600);
+};
 var ITEMS = [
   { e: "🥾", t: "Botas lavadas, con la suela revisada", s: "Botas lavadas", ok: "pasa", r: "Botas limpias: sin barro ni semillas." },
   { e: "🥫", t: "Conservas en latas selladas", s: "Latas selladas", ok: "pasa", r: "Envase cerrado y limpio: no lleva tierra." },
