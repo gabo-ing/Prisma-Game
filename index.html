@@ -110,6 +110,22 @@ body.tv #app{max-width:1400px}
   transition:transform .26s ease, opacity .26s ease;user-select:none;-webkit-user-select:none;cursor:grab}
 .icard .em{font-size:5.5rem;line-height:1}
 .icard .nm{font-family:var(--display);font-weight:800;font-size:1.45rem;text-wrap:balance}
+.belt-wrap{display:flex;flex-direction:column;gap:6px}
+.belt-lbl{display:flex;justify-content:space-between;font:800 .72rem var(--display);letter-spacing:.1em;color:var(--suave,#5b7385)}
+.belt{position:relative;height:178px;overflow:hidden;border-radius:14px;background:#d8e3ea;border:2px solid #aebdc7;touch-action:manipulation}
+.belt:after{content:"";position:absolute;left:0;right:0;bottom:0;height:28px;background:repeating-linear-gradient(90deg,#3a4651 0 14px,#566471 14px 28px);animation:beltmove var(--bs,1s) linear infinite}
+@keyframes beltmove{to{background-position:28px 0}}
+.bitem{position:absolute;left:0;bottom:24px;width:104px;height:136px;background:var(--papel);border:2px solid var(--linea);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;box-shadow:0 5px 12px rgba(16,40,58,.16);z-index:1}
+.bitem .em{font-size:3.2rem;line-height:1}
+.bitem .nm{font:800 .78rem/1.15 var(--display);text-wrap:balance}
+.bitem.out{opacity:0;transform:translateY(40px)!important;transition:opacity .25s,transform .25s}
+.tray{min-height:58px;border:2px dashed var(--linea);border-radius:12px;display:flex;flex-wrap:wrap;gap:6px;padding:6px 8px;align-items:center}
+.tray>span{font:800 .72rem var(--display);letter-spacing:.1em;color:var(--suave,#5b7385);margin-right:4px}
+.chip{font-size:1.6rem;line-height:1;border-radius:10px;padding:3px 6px;border:2px solid var(--linea);background:#fff}
+.chip.ok{border-color:var(--ok)}.chip.bad{border-color:var(--mal)}
+.speedsel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.speedsel .btn{padding:10px 6px;font-size:.95rem}
+.speedsel .btn.on{outline:3px solid var(--ok)}
 .stamp{position:absolute;top:16px;font:800 1.1rem var(--display);letter-spacing:.08em;padding:4px 10px;border:3px solid;border-radius:8px;opacity:0}
 .st-rev{left:16px;color:var(--parka-osc);transform:rotate(-10deg)}
 .st-pas{right:16px;color:var(--ok);transform:rotate(10deg)}
@@ -174,9 +190,13 @@ body.tv #app{max-width:1400px}
   </div>
   <div class="stage" id="stageWrap"><svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Escena de juego"></svg></div>
   <div class="swipe" id="swipe" hidden>
-    <div class="deck" id="deck"></div>
-    <div class="swipe-btns"><button class="btn" type="button" id="btnRev">← Revisar</button><button class="btn pas" type="button" id="btnPas">Pasa →</button></div>
-    <p class="small" style="text-align:center">Desliza la tarjeta o usa los botones.</p>
+    <div class="belt-wrap">
+      <div class="belt-lbl"><span>ENTRADA</span><span>BASE ➜</span></div>
+      <div class="belt" id="belt"></div>
+      <div class="tray" id="tray"><span>EN REVISIÓN</span></div>
+    </div>
+    <div class="swipe-btns"><button class="btn" type="button" id="btnRev">↓ Revisar el primero</button><button class="btn pas" type="button" id="btnPas">Pasa →</button></div>
+    <p class="small" style="text-align:center">Toca un objeto para mandarlo a revisión. Lo que no toques pasa a la base.</p>
   </div>
 </section>
 
@@ -351,9 +371,11 @@ function svgPoint(svg, evt){
   var p = svg.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY;
   return p.matrixTransform(svg.getScreenCTM().inverse());
 }
+function vk(svg){ var vb = svg.viewBox && svg.viewBox.baseVal; return vb && vb.width ? vb.width / 320 : 1; }
 function fx(svg, x, y, txt, bad){
-  var c = el("circle", { cx: x, cy: y, r: 14, "class": "fx-ring" + (bad ? " fx-bad" : "") }, svg);
-  var t = el("text", { x: x, y: y - 12, "text-anchor": "middle", "class": "fx-txt" + (bad ? " bad" : "") }, svg);
+  var k = vk(svg);
+  var c = el("circle", { cx: x, cy: y, r: 14 * k, "class": "fx-ring" + (bad ? " fx-bad" : ""), style: "stroke-width:" + (3 * k) + "px" }, svg);
+  var t = el("text", { x: x, y: y - 12 * k, "text-anchor": "middle", "class": "fx-txt" + (bad ? " bad" : ""), style: "font-size:" + (15 * k) + "px;stroke-width:" + (3 * k) + "px" }, svg);
   t.textContent = txt;
   setTimeout(function(){ c.remove(); t.remove(); }, 950);
 }
@@ -370,7 +392,7 @@ function onTap(evt){
   });
   if (best && best.good){
     best.found = true; setScore(10);
-    el("circle", { cx: best.x, cy: best.y, r: best.mark || 9, "class": "found-mark" }, svg);
+    el("circle", { cx: best.x, cy: best.y, r: best.mark || 9, "class": "found-mark", style: "stroke-width:" + (2.5 * vk(svg)) + "px" }, svg);
     fx(svg, best.x, best.y, "+10");
     if (best.onFind) best.onFind();
     if (targets.every(function(t){ return !t.good || t.found; })){
@@ -402,8 +424,8 @@ stageEl.addEventListener("pointerup", function(e){
 stageEl.addEventListener("pointercancel", function(e){ delete ptrs[e.pointerId]; if (!nPtrs()) multi = false; });
 
 /* ---------- Dibujo: semillas ---------- */
-function drawSeed(g, x, y){
-  var s = el("g", { transform: "translate(" + x + " " + y + ") rotate(" + rnd(0, 180) + ") scale(1.7)" }, g);
+function drawSeed(g, x, y, k){
+  var s = el("g", { transform: "translate(" + x + " " + y + ") rotate(" + rnd(0, 180) + ") scale(" + (k || 1.7) + ")" }, g);
   if (Math.random() < 0.65){
     el("ellipse", { rx: 5, ry: 2.4, fill: "#f2c35a", stroke: "#3d2a0c", "stroke-width": 1.1 }, s);
     el("line", { x1: -3, y1: 0, x2: 3, y2: 0, stroke: "#c08a2a", "stroke-width": 0.7 }, s);
@@ -432,7 +454,40 @@ function weightedZone(zs){
   for (var i = 0; i < zs.length; i++){ r -= zs[i].wt; if (r <= 0) return zs[i]; }
   return zs[zs.length - 1];
 }
+var RES_IMG = "img/investigadora-v3.jpg", RES_OK = false;
+(function(){ var im = new Image(); im.onload = function(){ RES_OK = true; }; im.src = RES_IMG; })();
+/* Zonas de semillas sobre la ilustración (687 x 1024). Fuera: piel de la capucha y franja de la correa con la bota. */
+var ZONES_IMG = [
+  { x: 255, y: 330, w: 60, h: 18, wt: 0.8, n: "bolsillo" }, { x: 378, y: 330, w: 60, h: 18, wt: 0.8, n: "bolsillo" },
+  { x: 238, y: 478, w: 72, h: 20, wt: 0.8, n: "bolsillo" }, { x: 380, y: 478, w: 75, h: 20, wt: 0.8, n: "bolsillo" },
+  { x: 165, y: 518, w: 60, h: 20, wt: 1.3, n: "velcro" }, { x: 470, y: 518, w: 60, h: 20, wt: 1.3, n: "velcro" },
+  { x: 245, y: 770, w: 75, h: 20, wt: 1.2, n: "borde de bota" }, { x: 370, y: 770, w: 70, h: 20, wt: 1.2, n: "borde de bota" },
+  { x: 255, y: 800, w: 65, h: 120, wt: 2, n: "bota" }, { x: 375, y: 800, w: 60, h: 120, wt: 2, n: "bota" },
+  { x: 500, y: 720, w: 120, h: 130, wt: 2.2, n: "mochila" }, { x: 470, y: 860, w: 45, h: 65, wt: 1.5, n: "malla" },
+  { x: 60, y: 905, w: 150, h: 50, wt: 3, n: "suela" }
+];
+function drawPortImg(svg){
+  svg.innerHTML = ""; svg.setAttribute("viewBox", "0 0 687 1024");
+  var g = el("g", {}, svg);
+  el("image", { href: RES_IMG, x: 0, y: 0, width: 687, height: 1024 }, g);
+  var i, m = 12;
+  for (i = 0; i < 16; i++){
+    var z = weightedZone(ZONES_IMG);
+    el("circle", { cx: rnd(z.x + m, z.x + z.w - m), cy: rnd(z.y + 6, z.y + z.h - 6), r: rnd(2.2, 4.2), fill: pick(["#8c949a", "#c2c8cc", "#5c6870"]) }, g);
+  }
+  targets = [];
+  var tries = 0;
+  while (targets.length < S.seedsTotal && tries < 800){
+    tries++;
+    var zz = weightedZone(ZONES_IMG);
+    var x = rnd(zz.x + m, zz.x + zz.w - m), y = rnd(zz.y + 8, zz.y + zz.h - 8);
+    if (targets.some(function(t){ return Math.hypot(t.x - x, t.y - y) < 58; })) continue;
+    drawSeed(g, x, y, 3.2);
+    targets.push({ x: x, y: y, good: true, mark: 22, zone: zz.n, onFind: function(){ S.seedsFound++; updatePrompt1(); } });
+  }
+}
 function drawPort(svg){
+  if (RES_OK) return drawPortImg(svg);
   svg.innerHTML = ""; svg.setAttribute("viewBox", "0 0 320 520");
   var g = el("g", {}, svg);
   el("rect", { x: 0, y: 0, width: 320, height: 520, fill: "#d9e5ec" }, g);
@@ -515,7 +570,12 @@ function drawPort(svg){
 function updatePrompt1(){ $("#hudPrompt").innerHTML = "Semillas: <b>" + S.seedsFound + " / " + S.seedsTotal + "</b>"; }
 
 /* ---------- Dibujo: plantas ---------- */
+function plantImg(g, k, x, y, s){
+  var H = ({ d: 44, c: 28, p: 44 })[k] * s, w = H * PLANT_IMG[k][1];
+  el("image", { href: PLANT_IMG[k][0], x: x - w / 2, y: y - H, width: w, height: H }, g);
+}
 function deschampsia(g, x, y, s){
+  if (PLANT_OK.d) return plantImg(g, "d", x, y, s);
   var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
   el("ellipse", { cx: 0, cy: 1, rx: 6, ry: 2.4, fill: "#33501f" }, p);
   for (var i = 0; i < 11; i++){
@@ -524,12 +584,14 @@ function deschampsia(g, x, y, s){
   }
 }
 function colobanthus(g, x, y, s){
+  if (PLANT_OK.c) return plantImg(g, "c", x, y, s);
   var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
   el("ellipse", { cx: 0, cy: -4, rx: 12, ry: 7.5, fill: "#8fa83e", stroke: "#5f7428", "stroke-width": 1.2 }, p);
   for (var i = 0; i < 9; i++) el("circle", { cx: rnd(-8, 8), cy: rnd(-8, 0), r: 1.6, fill: "#73892f" }, p);
   for (i = 0; i < 4; i++) el("circle", { cx: rnd(-7, 7), cy: rnd(-9, -2), r: 1.3, fill: "#e6e07a" }, p);
 }
 function poa(g, x, y, s){
+  if (PLANT_OK.p) return plantImg(g, "p", x, y, s);
   /* Forma primero: hojas anchas, blandas y caídas + espigas blancas abiertas (no depende del color). */
   var p = el("g", { transform: "translate(" + x + " " + y + ") scale(" + s + ")" }, g);
   el("ellipse", { cx: 0, cy: 1, rx: 8, ry: 2.6, fill: "#5f8a2a" }, p);
@@ -603,7 +665,8 @@ function drawScene(svg, kind, nInv){
   function free(x, y){
     if (y < minY + 20 || y > 545 || x < 16 || x > 344) return false;
     if (obst.some(function(o){ return Math.hypot(o.x - x, o.y - y) < o.r; })) return false;
-    return !plants.some(function(p){ return Math.hypot(p.x - x, p.y - y) < 30; });
+    var sep = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? 40 : 30;
+    return !plants.some(function(p){ return Math.hypot(p.x - x, p.y - y) < sep; });
   }
   var L = route.getTotalLength(), tries = 0, inv = 0;
   while (inv < nInv && tries < 800){
@@ -612,7 +675,7 @@ function drawScene(svg, kind, nInv){
     if (Math.hypot(x - q2.x, y - q2.y) < 14 || !free(x, y)) continue;
     plants.push({ x: x, y: y, k: "poa" }); inv++;
   }
-  var want = { des: 13, col: 7 };
+  var want = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? { des: 9, col: 5 } : { des: 13, col: 7 };
   ["des", "col"].forEach(function(k){
     var n = 0, t2 = 0;
     while (n < want[k] && t2 < 800){ t2++; var x3 = rnd(20, 340), y3 = rnd(minY + 20, 540); if (!free(x3, y3)) continue; plants.push({ x: x3, y: y3, k: k }); n++; }
@@ -620,9 +683,9 @@ function drawScene(svg, kind, nInv){
   plants.sort(function(a, b){ return a.y - b.y; });
   plants.forEach(function(p){
     var sc = rnd(0.95, 1.2);
-    if (p.k === "poa"){ poa(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 6, rad: 4, mark: 16, good: true, onFind: function(){ S.invFound++; updatePrompt2(); } }); }
-    else if (p.k === "des"){ deschampsia(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 8, rad: 2, good: false, msg: "¡Ojo! Es pasto antártico, nativo" }); }
-    else { colobanthus(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - 4, rad: 2, good: false, msg: "¡Ojo! Es clavelito antártico, nativo" }); }
+    if (p.k === "poa"){ poa(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.p ? 18 : 6), rad: PLANT_OK.p ? 10 : 4, mark: PLANT_OK.p ? 26 : 16, good: true, onFind: function(){ S.invFound++; updatePrompt2(); } }); }
+    else if (p.k === "des"){ deschampsia(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.d ? 20 : 8), rad: PLANT_OK.d ? 8 : 2, good: false, msg: "¡Ojo! Es pasto antártico, nativo" }); }
+    else { colobanthus(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.c ? 12 : 4), rad: PLANT_OK.c ? 8 : 2, good: false, msg: "¡Ojo! Es clavelito antártico, nativo" }); }
   });
   return inv;
 }
@@ -717,7 +780,7 @@ function introR1(){
   intro(S.mode === "mini" ? "Minijuego" : "Ronda 2 de 4", "Control de bioseguridad", LONG ? [
     para("Antes de bajar a tierra en la Antártica, una expedicionaria pasa por el control de bioseguridad. Revisa su ropa y su mochila y <strong>toca cada semilla</strong> que encuentres."),
     para("Tienes 1 minuto. Cada toque en falso resta 2 puntos."),
-    para("<span class=\"small\">Pista: busca en las suelas, en los puños con velcro, en las bastas del pantalón y en la mochila.</span>")
+    para("<span class=\"small\">Pista: busca en la suela de la bota de repuesto, en el borde de las botas, en los puños con velcro, en los bolsillos y en la mochila.</span>")
   ] : [
     para("Antes de bajar a tierra, revisa a la expedicionaria: <strong>toca cada semilla</strong> escondida en su ropa y mochila. Tienes 1 minuto.")
   ], "Revisar equipaje", round1, PH.puerto);
@@ -754,7 +817,7 @@ function introR2(){
 }
 function guideCard(nombre, sci, cls, tagTxt, desc, drawFn){
   var c = document.createElement("div"); c.className = "card" + (cls === "inv" ? " inv" : "");
-  var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "-22 -30 44 38"); svg.setAttribute("aria-hidden", "true");
+  var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? "-34 -50 68 56" : "-22 -30 44 38"); svg.setAttribute("aria-hidden", "true");
   drawFn(svg, 0, 0, 1);
   c.appendChild(svg);
   var t = document.createElement("span"); t.className = "tag " + cls; t.textContent = tagTxt; c.appendChild(t);
@@ -797,88 +860,111 @@ function nextZone(zi){
 /* ---------- Ronda 1: control de carga (¿pasa o no pasa?) ---------- */
 function stageMode(on){ $("#stageWrap").hidden = !on; $("#swipe").hidden = on; }
 var ITEMS = [
-  { e: "🥾", t: "Botas lavadas, con la suela revisada", ok: "pasa", r: "Botas limpias: sin barro ni semillas." },
-  { e: "🥫", t: "Conservas en latas selladas", ok: "pasa", r: "Envase cerrado y limpio: no lleva tierra." },
-  { e: "🧥", t: "Parka nueva, recién sacada de su bolsa", ok: "pasa", r: "Ropa nueva y limpia: sin semillas." },
-  { e: "💻", t: "Notebook guardado en su funda", ok: "pasa", r: "Equipo limpio y protegido." },
-  { e: "🎒", t: "Mochila aspirada por dentro y por fuera", ok: "pasa", r: "Aspirar costuras y bolsillos saca las semillas." },
-  { e: "🍝", t: "Fideos en paquetes sellados", ok: "pasa", r: "Alimento seco y envasado: bajo riesgo." },
-  { e: "🧦", t: "Calcetines de lana con semillas pegadas", ok: "revisar", r: "Los calcetines enganchan muchas semillas." },
-  { e: "🌱", t: "Una plantita en macetero, de regalo para la base", ok: "revisar", r: "No se permite llevar plantas no nativas ni tierra a la Antártica." },
-  { e: "🥬", t: "Lechugas con tierra en las raíces", ok: "revisar", r: "La tierra de los alimentos puede traer semillas y bichos." },
-  { e: "🥾", t: "Botas con barro seco en la suela", ok: "revisar", r: "El barro de la suela esconde semillas." },
-  { e: "👖", t: "Pantalón usado para caminar por un campo de trigo", ok: "revisar", r: "Quien estuvo en zonas agrícolas lleva más semillas." },
-  { e: "📦", t: "Cajas guardadas en una bodega rodeada de pasto", ok: "revisar", r: "La carga también transporta semillas." },
-  { e: "🍎", t: "Fruta fresca con hojas y bichitos", ok: "revisar", r: "Frutas y verduras frescas pueden traer insectos y hongos." },
-  { e: "📷", t: "Trípode de cámara con tierra en las patas", ok: "revisar", r: "Los equipos de terreno con tierra hay que limpiarlos." }
+  { e: "🥾", t: "Botas lavadas, con la suela revisada", s: "Botas lavadas", ok: "pasa", r: "Botas limpias: sin barro ni semillas." },
+  { e: "🥫", t: "Conservas en latas selladas", s: "Latas selladas", ok: "pasa", r: "Envase cerrado y limpio: no lleva tierra." },
+  { e: "🧥", t: "Parka nueva, recién sacada de su bolsa", s: "Parka nueva en su bolsa", ok: "pasa", r: "Ropa nueva y limpia: sin semillas." },
+  { e: "💻", t: "Notebook guardado en su funda", s: "Notebook en su funda", ok: "pasa", r: "Equipo limpio y protegido." },
+  { e: "🎒", t: "Mochila aspirada por dentro y por fuera", s: "Mochila aspirada", ok: "pasa", r: "Aspirar costuras y bolsillos saca las semillas." },
+  { e: "🍝", t: "Fideos en paquetes sellados", s: "Fideos sellados", ok: "pasa", r: "Alimento seco y envasado: bajo riesgo." },
+  { e: "🧦", t: "Calcetines de lana con semillas pegadas", s: "Calcetines con semillas", ok: "revisar", r: "Los calcetines enganchan muchas semillas." },
+  { e: "🌱", t: "Una plantita en macetero, de regalo para la base", s: "Planta en macetero", ok: "revisar", r: "No se permite llevar plantas no nativas ni tierra a la Antártica." },
+  { e: "🥬", t: "Lechugas con tierra en las raíces", s: "Lechugas con tierra", ok: "revisar", r: "La tierra de los alimentos puede traer semillas y bichos." },
+  { e: "🥾", t: "Botas con barro seco en la suela", s: "Botas con barro", ok: "revisar", r: "El barro de la suela esconde semillas." },
+  { e: "👖", t: "Pantalón usado para caminar por un campo de trigo", s: "Pantalón de campo de trigo", ok: "revisar", r: "Quien estuvo en zonas agrícolas lleva más semillas." },
+  { e: "📦", t: "Cajas guardadas en una bodega rodeada de pasto", s: "Cajas de bodega con pasto", ok: "revisar", r: "La carga también transporta semillas." },
+  { e: "🍎", t: "Fruta fresca con hojas y bichitos", s: "Fruta con hojas y bichos", ok: "revisar", r: "Frutas y verduras frescas pueden traer insectos y hongos." },
+  { e: "📷", t: "Trípode de cámara con tierra en las patas", s: "Trípode con tierra", ok: "revisar", r: "Los equipos de terreno con tierra hay que limpiarlos." }
 ];
-var deck = [], di = 0, dragging = null;
+var deck = [], di = 0;
+var BELT_SPD = 0, BELT_LV = [{ n: "Lenta", v: 36, gap: 5 }, { n: "Media", v: 60, gap: 3.4 }, { n: "Rápida", v: 90, gap: 2.4 }];
+var bs = null;
+function speedNode(){
+  var w = document.createElement("div"); w.className = "stack"; w.style.gap = "6px";
+  var l = document.createElement("p"); l.className = "small"; l.innerHTML = "<strong>Velocidad de la cinta</strong>"; w.appendChild(l);
+  var row = document.createElement("div"); row.className = "speedsel"; w.appendChild(row);
+  BELT_LV.forEach(function(lv, i){
+    var b = document.createElement("button"); b.type = "button"; b.className = "btn sec" + (i === BELT_SPD ? " on" : ""); b.textContent = lv.n;
+    b.onclick = function(){ BELT_SPD = i; row.querySelectorAll(".btn").forEach(function(x, j){ x.classList.toggle("on", j === i); }); };
+    row.appendChild(b);
+  });
+  return w;
+}
 function introCarga(){
   intro(S.mode === "mini" ? "Minijuego" : "Ronda 1 de 4", "¿Pasa o no pasa?", !LONG ? [
-    para("Llega carga para una base antártica. Desliza a la derecha si <strong>pasa</strong> y a la izquierda si hay que <strong>revisarla</strong> porque puede traer semillas, tierra o bichos. Tienes 2 minutos para 6 tarjetas: piénsalo con calma.")
+    para("Llega carga para una base antártica y avanza por la cinta. <strong>Toca un objeto</strong> para mandarlo a <strong>revisión</strong> si puede traer semillas, tierra o bichos. Lo que no toques <strong>pasa</strong> a la base."),
+    speedNode()
   ] : [
-    para("Estás en el control de carga de un barco que va a la Antártica. Llegan cosas para la base: decide si <strong>pasan</strong> o si hay que <strong>revisarlas</strong> porque pueden traer semillas, tierra o bichos."),
-    para("Desliza la tarjeta a la derecha si <strong>pasa</strong> y a la izquierda si hay que <strong>revisar</strong>. También puedes usar los botones. Tienes 4 minutos para 8 tarjetas.")
+    para("Estás en el control de carga de un barco que va a la Antártica. Las cosas para la base avanzan por la cinta: <strong>toca</strong> las que haya que <strong>revisar</strong> porque pueden traer semillas, tierra o bichos. Las demás pasan."),
+    para("También puedes usar los botones: actúan sobre el primer objeto de la cinta. Son 8 objetos."),
+    speedNode()
   ], "Abrir el control", roundCarga, PH.carga);
 }
+function itemCopy(it){ return { e: it.e, t: it.t, s: it.s, ok: it.ok, r: it.r, done: false }; }
 function roundCarga(){
   show("juego"); stageMode(false);
   $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 1 · ") + "Control de carga";
   var half = LONG ? 4 : 3;
   var ok = shuffle(ITEMS.filter(function(i){ return i.ok === "pasa"; })).slice(0, half);
   var bad = shuffle(ITEMS.filter(function(i){ return i.ok === "revisar"; })).slice(0, half);
-  deck = shuffle(ok.concat(bad)); di = 0; S.cargoRight = 0; S.cargoLeak = 0;
-  updatePromptC(); playing = true; renderCard(); startTimer(deck.length * (LONG ? 30 : 20), endCarga);
+  deck = shuffle(ok.concat(bad)).map(itemCopy); di = 0; S.cargoRight = 0; S.cargoLeak = 0;
+  var belt = $("#belt"), tray = $("#tray");
+  belt.querySelectorAll(".bitem").forEach(function(n){ n.remove(); });
+  tray.querySelectorAll(".chip").forEach(function(n){ n.remove(); });
+  var lv = BELT_LV[BELT_SPD];
+  belt.style.setProperty("--bs", (28 / lv.v) + "s");
+  bs = { items: [], spawned: 0, t: 0, last: performance.now(), v: lv.v, gap: lv.gap, W: belt.clientWidth || 340, raf: 0 };
+  updatePromptC(); playing = true;
+  startTimer(deck.length * lv.gap + (bs.W + 110) / lv.v + 15, endCarga);
+  bs.raf = requestAnimationFrame(beltLoop);
 }
-function updatePromptC(){ $("#hudPrompt").innerHTML = "Tarjeta <b>" + Math.min(di + 1, deck.length) + " / " + deck.length + "</b>"; }
-function renderCard(){
-  var d = $("#deck"); d.innerHTML = "";
-  if (di >= deck.length) return;
-  var it = deck[di], c = document.createElement("div"); c.className = "icard";
-  c.innerHTML = '<span class="stamp st-rev">REVISAR</span><span class="stamp st-pas">PASA</span><span class="em" aria-hidden="true"></span><span class="nm"></span>';
-  c.querySelector(".em").textContent = it.e; c.querySelector(".nm").textContent = it.t;
-  c.addEventListener("pointerdown", function(e){
-    if (!playing) return;
-    dragging = { x: e.clientX, id: e.pointerId, dx: 0 };
-    try { c.setPointerCapture(e.pointerId); } catch(err){}
-    c.style.transition = "none";
-  });
-  c.addEventListener("pointermove", function(e){
-    if (!dragging || dragging.id !== e.pointerId) return;
-    var dx = e.clientX - dragging.x; dragging.dx = dx;
-    c.style.transform = "translateX(" + dx + "px) rotate(" + (dx / 14) + "deg)";
-    c.querySelector(".st-pas").style.opacity = Math.max(0, dx / 90);
-    c.querySelector(".st-rev").style.opacity = Math.max(0, -dx / 90);
-  });
-  function release(e){
-    if (!dragging || dragging.id !== e.pointerId) return;
-    var dx = dragging.dx; dragging = null; c.style.transition = "";
-    if (Math.abs(dx) > 80) decide(dx > 0 ? "pasa" : "revisar");
-    else { c.style.transform = ""; c.querySelectorAll(".stamp").forEach(function(s){ s.style.opacity = 0; }); }
-  }
-  c.addEventListener("pointerup", release); c.addEventListener("pointercancel", release);
-  d.appendChild(c);
+function updatePromptC(){ $("#hudPrompt").innerHTML = "Objetos decididos <b>" + Math.min(di, deck.length) + " / " + deck.length + "</b>"; }
+function spawnItem(){
+  var d = deck[bs.spawned++], n = document.createElement("div"); n.className = "bitem";
+  n.innerHTML = '<span class="em" aria-hidden="true"></span><span class="nm"></span>';
+  n.querySelector(".em").textContent = d.e; n.querySelector(".nm").textContent = d.s || d.t;
+  var it = { d: d, x: -110, node: n, run: false };
+  n.addEventListener("pointerdown", function(e){ e.preventDefault(); if (playing && !d.done) decideItem(it, "revisar"); });
+  n.style.transform = "translateX(-110px)";
+  $("#belt").appendChild(n); bs.items.push(it);
 }
-function decide(choice){
-  if (!playing || di >= deck.length) return;
-  var it = deck[di], good = choice === it.ok, c = $("#deck .icard");
-  if (good){ setScore(10); S.cargoRight++; } else { setScore(-5); if (it.ok === "revisar") S.cargoLeak++; }
-  toast((good ? "¡Bien! " : "¡Ups! ") + it.r);
-  if (c){ var dir = choice === "pasa" ? 1 : -1; c.style.transform = "translateX(" + (dir * 130) + "%) rotate(" + (dir * 18) + "deg)"; c.style.opacity = "0"; }
+function beltLoop(now){
+  if (!bs || !playing) return;
+  var dt = Math.min(0.1, (now - bs.last) / 1000); bs.last = now; bs.t += dt;
+  if (bs.spawned < deck.length && bs.t >= bs.spawned * bs.gap) spawnItem();
+  bs.items = bs.items.filter(function(it){
+    if (it.gone) return false;
+    it.x += bs.v * (it.run ? 4 : 1) * dt;
+    it.node.style.transform = "translateX(" + it.x + "px)";
+    if (!it.d.done && it.x > bs.W - 30) decideItem(it, "pasa");
+    if (it.x > bs.W + 10){ it.node.remove(); return false; }
+    return true;
+  });
+  bs.raf = requestAnimationFrame(beltLoop);
+}
+function frontItem(){
+  var f = null;
+  bs && bs.items.forEach(function(it){ if (!it.d.done && it.x > -60 && (!f || it.x > f.x)) f = it; });
+  return f;
+}
+function decideItem(it, choice){
+  if (!playing || it.d.done) return;
+  it.d.done = true;
+  var good = choice === it.d.ok;
+  if (good){ setScore(10); S.cargoRight++; } else { setScore(-5); if (it.d.ok === "revisar") S.cargoLeak++; }
+  toast((good ? "¡Bien! " : "¡Ups! ") + it.d.r);
   di++; updatePromptC();
-  setTimeout(function(){
-    if (di >= deck.length){
-      if (!playing) return;
-      var bonus = Math.min(20, Math.round(timeLeft())); stopRound();
-      if (bonus > 0){ setScore(bonus); toast("¡Carga lista! Bono de tiempo +" + bonus); }
-      setTimeout(endCarga, 900);
-    } else renderCard();
-  }, 260);
+  if (choice === "revisar"){
+    var c = document.createElement("span"); c.className = "chip " + (good ? "ok" : "bad"); c.textContent = it.d.e; $("#tray").appendChild(c);
+    it.gone = true; it.node.classList.add("out"); setTimeout(function(){ it.node.remove(); }, 300);
+  } else it.run = it.x < bs.W - 30;
+  if (di >= deck.length){ stopRound(); setTimeout(endCarga, 900); }
 }
 function endCarga(){
   stopRound();
-  for (var k = di; k < deck.length; k++) if (deck[k].ok === "revisar") S.cargoLeak++;
-  di = deck.length; $("#deck").innerHTML = "";
+  if (bs){ cancelAnimationFrame(bs.raf); }
+  deck.forEach(function(d){ if (!d.done && d.ok === "revisar") S.cargoLeak++; });
+  var decided = deck.filter(function(d){ return d.done; }).length;
+  di = deck.length; $("#belt").querySelectorAll(".bitem").forEach(function(n){ n.remove(); }); bs = null;
   var mini = S.mode === "mini";
   var txt = "Clasificaste bien " + S.cargoRight + " de " + deck.length + " cosas.";
   if (S.cargoLeak > 0) txt += " <strong>" + S.cargoLeak + (S.cargoLeak === 1 ? " cosa con tierra o semillas pasó" : " cosas con tierra o semillas pasaron") + " el control</strong>" + (mini ? "." : ": lo que traían aparecerá en la ronda de invasores.");
@@ -892,12 +978,13 @@ function endCarga(){
     fact("Con el equipaje y la carga de un solo programa antártico llegan más de 1.400 semillas de 99 tipos de plantas por temporada, y entre el 30 % y el 50 % puede caer al suelo.", ["lee09"])
   ]), mini ? finish : introR1, mini ? "Ver mi puntaje" : "Siguiente");
 }
-$("#btnPas").onclick = function(){ decide("pasa"); };
-$("#btnRev").onclick = function(){ decide("revisar"); };
+$("#btnPas").onclick = function(){ var f = frontItem(); if (f) decideItem(f, "pasa"); };
+$("#btnRev").onclick = function(){ var f = frontItem(); if (f) decideItem(f, "revisar"); };
 document.addEventListener("keydown", function(e){
   if ($("#swipe").hidden || !playing) return;
-  if (e.key === "ArrowRight") decide("pasa");
-  else if (e.key === "ArrowLeft") decide("revisar");
+  var f = frontItem(); if (!f) return;
+  if (e.key === "ArrowRight") decideItem(f, "pasa");
+  else if (e.key === "ArrowLeft" || e.key === "ArrowDown") decideItem(f, "revisar");
 });
 
 /* ---------- Ronda 4: quiz ---------- */
