@@ -571,7 +571,7 @@ function updatePrompt1(){ $("#hudPrompt").innerHTML = "Semillas: <b>" + S.seedsF
 
 /* ---------- Dibujo: plantas ---------- */
 function plantImg(g, k, x, y, s){
-  var H = ({ d: 44, c: 28, p: 44 })[k] * s, w = H * PLANT_IMG[k][1];
+  var H = ({ d: 62, c: 34, p: 62 })[k] * s, w = H * PLANT_IMG[k][1];
   el("image", { href: PLANT_IMG[k][0], x: x - w / 2, y: y - H, width: w, height: H }, g);
 }
 function deschampsia(g, x, y, s){
@@ -663,9 +663,10 @@ function drawScene(svg, kind, nInv){
   targets = [];
   var plants = [];
   function free(x, y){
-    if (y < minY + 20 || y > 545 || x < 16 || x > 344) return false;
+    var mx0 = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? 38 : 16;
+    if (y < minY + 20 || y > 545 || x < mx0 || x > 360 - mx0) return false;
     if (obst.some(function(o){ return Math.hypot(o.x - x, o.y - y) < o.r; })) return false;
-    var sep = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? 40 : 30;
+    var sep = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? 54 : 30;
     return !plants.some(function(p){ return Math.hypot(p.x - x, p.y - y) < sep; });
   }
   var L = route.getTotalLength(), tries = 0, inv = 0;
@@ -675,17 +676,17 @@ function drawScene(svg, kind, nInv){
     if (Math.hypot(x - q2.x, y - q2.y) < 14 || !free(x, y)) continue;
     plants.push({ x: x, y: y, k: "poa" }); inv++;
   }
-  var want = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? { des: 9, col: 5 } : { des: 13, col: 7 };
+  var want = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? { des: 6, col: 4 } : { des: 13, col: 7 };
   ["des", "col"].forEach(function(k){
     var n = 0, t2 = 0;
     while (n < want[k] && t2 < 800){ t2++; var x3 = rnd(20, 340), y3 = rnd(minY + 20, 540); if (!free(x3, y3)) continue; plants.push({ x: x3, y: y3, k: k }); n++; }
   });
   plants.sort(function(a, b){ return a.y - b.y; });
   plants.forEach(function(p){
-    var sc = rnd(0.95, 1.2);
-    if (p.k === "poa"){ poa(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.p ? 18 : 6), rad: PLANT_OK.p ? 10 : 4, mark: PLANT_OK.p ? 26 : 16, good: true, onFind: function(){ S.invFound++; updatePrompt2(); } }); }
-    else if (p.k === "des"){ deschampsia(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.d ? 20 : 8), rad: PLANT_OK.d ? 8 : 2, good: false, msg: "¡Ojo! Es pasto antártico, nativo" }); }
-    else { colobanthus(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.c ? 12 : 4), rad: PLANT_OK.c ? 8 : 2, good: false, msg: "¡Ojo! Es clavelito antártico, nativo" }); }
+    var sc = PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? rnd(0.97, 1.06) : rnd(0.95, 1.2);
+    if (p.k === "poa"){ poa(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.p ? 28 : 6), rad: PLANT_OK.p ? 14 : 4, mark: PLANT_OK.p ? 36 : 16, good: true, onFind: function(){ S.invFound++; updatePrompt2(); } }); }
+    else if (p.k === "des"){ deschampsia(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.d ? 28 : 8), rad: PLANT_OK.d ? 12 : 2, good: false, msg: "¡Ojo! Es pasto antártico, nativo" }); }
+    else { colobanthus(g, p.x, p.y, sc); targets.push({ x: p.x, y: p.y - (PLANT_OK.c ? 16 : 4), rad: PLANT_OK.c ? 10 : 2, good: false, msg: "¡Ojo! Es clavelito antártico, nativo" }); }
   });
   return inv;
 }
@@ -817,7 +818,7 @@ function introR2(){
 }
 function guideCard(nombre, sci, cls, tagTxt, desc, drawFn){
   var c = document.createElement("div"); c.className = "card" + (cls === "inv" ? " inv" : "");
-  var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? "-34 -50 68 56" : "-22 -30 44 38"); svg.setAttribute("aria-hidden", "true");
+  var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", PLANT_OK.d && PLANT_OK.c && PLANT_OK.p ? "-36 -66 72 72" : "-22 -30 44 38"); svg.setAttribute("aria-hidden", "true");
   drawFn(svg, 0, 0, 1);
   c.appendChild(svg);
   var t = document.createElement("span"); t.className = "tag " + cls; t.textContent = tagTxt; c.appendChild(t);
