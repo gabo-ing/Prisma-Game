@@ -110,6 +110,8 @@ body.tv #app{max-width:1400px}
   transition:transform .26s ease, opacity .26s ease;user-select:none;-webkit-user-select:none;cursor:grab}
 .icard .em{font-size:5.5rem;line-height:1}
 .icard .nm{font-family:var(--display);font-weight:800;font-size:1.45rem;text-wrap:balance}
+.belt-fb{display:flex;align-items:center;justify-content:center;min-height:3.4em;margin:0;padding:8px 12px;border-radius:12px;font-weight:700;font-size:.92rem;line-height:1.3;text-align:center;background:transparent;color:var(--tinta)}
+.belt-fb.ok{background:#e3f3ea;color:#1f5a37}.belt-fb.bad{background:#fbe6e2;color:#8f2a1f}
 .hintrow{display:flex;align-items:center;gap:12px;padding-top:8px}
 .hintrow .btn{width:auto;padding:10px 16px}
 .hint-ring{fill:none;stroke:#e4552a;stroke-width:5;transform-box:fill-box;transform-origin:center;animation:hintpulse .8s ease-in-out infinite}
@@ -200,7 +202,8 @@ body.tv #app{max-width:1400px}
       <div class="belt" id="belt"></div>
       <div class="tray" id="tray"><span>EN REVISIÓN</span></div>
     </div>
-    <div class="swipe-btns"><button class="btn" type="button" id="btnRev">↓ Revisar el primero</button><button class="btn pas" type="button" id="btnPas">Pasa →</button></div>
+    <div class="swipe-btns"><button class="btn" type="button" id="btnRev">↓ Revisar</button><button class="btn pas" type="button" id="btnPas">Pasa →</button></div>
+    <p class="belt-fb" id="beltFb" role="status" aria-live="polite"></p>
     <p class="small" style="text-align:center">Toca un objeto para mandarlo a revisión. Lo que no toques pasa a la base.</p>
   </div>
 </section>
@@ -783,7 +786,7 @@ function startMini(n){
   else startQuiz();
 }
 function introR1(){
-  intro(S.mode === "mini" ? "Minijuego" : "Ronda 2 de 4", "Control de bioseguridad", LONG ? [
+  intro(S.mode === "mini" ? "Minijuego" : "Ronda 2 de " + (LONG ? 4 : 3), "Control de bioseguridad", LONG ? [
     para("Antes de bajar a tierra en la Antártica, una expedicionaria pasa por el control de bioseguridad. Revisa su ropa y su mochila y <strong>toca cada semilla</strong> que encuentres."),
     para("Tienes 1 minuto. Cada toque en falso resta 2 puntos."),
     para("<span class=\"small\">Pista: busca en la suela de la bota de repuesto, en el borde de las botas, en los puños con velcro, en los bolsillos y en la mochila.</span>")
@@ -814,12 +817,12 @@ function introR2(){
     guide.appendChild(guideCard("Pasto antártico", "Deschampsia antarctica", "nat", "Nativa", "Hojas finas y tiesas, como agujas, hacia arriba.", deschampsia));
     guide.appendChild(guideCard("Clavelito antártico", "Colobanthus quitensis", "nat", "Nativa", "Cojín redondo y apretado, pegado al suelo.", colobanthus));
     guide.appendChild(guideCard("Poa anual", "Poa annua", "inv", "Invasora", "Hojas anchas, blandas y caídas. Espigas blancas en la punta.", poa));
-    intro(S.mode === "mini" ? "Minijuego" : "Ronda 3 de 4", "¿Quién es el invasor?", [
+    intro(S.mode === "mini" ? "Minijuego" : "Ronda 3 de " + (LONG ? 4 : 3), "¿Quién es el invasor?", [
       para("En la Antártica viven solo <strong>dos plantas con flor nativas</strong>. Cualquier otro pasto es sospechoso. <strong>Fíjate en la forma</strong>, no en el color."),
       guide,
-      para("Toca solo las <strong>Poa annua</strong>. Si tocas una planta nativa pierdes 5 puntos. " + (LONG ? "Son 2 zonas de 40 segundos." : "Tienes 40 segundos.") + " Si te atascas, el botón <strong>Pista</strong> marca una Poa annua (cuesta 5 puntos; 2 por zona)."),
+      para("Toca solo las <strong>Poa annua</strong>. Si tocas una planta nativa pierdes 5 puntos. " + "Son 2 zonas de 40 segundos." + " Si te atascas, el botón <strong>Pista</strong> marca una Poa annua (cuesta 5 puntos; 2 por zona)."),
       para("<span class=\"small\">En terreno es más difícil: estas plantas se parecen mucho y las confirma una persona experta.</span>")
-    ], LONG ? "Ir a la zona 1" : "Buscar invasoras", function(){ round2(0); }, PH.guia);
+    ], "Ir a la zona 1", function(){ round2(0); }, PH.guia);
 }
 function guideCard(nombre, sci, cls, tagTxt, desc, drawFn){
   var c = document.createElement("div"); c.className = "card" + (cls === "inv" ? " inv" : "");
@@ -836,14 +839,14 @@ function round2(zi){
   S.zone = zi; var z = ZONAS[zi];
   var extra = Math.min(LONG ? 5 : 3, Math.ceil((S.seedsTotal - S.seedsFound) / 2) + (S.cargoLeak || 0));
   var n = zi === 0 ? 4 + extra : 4;
-  show("juego"); stageMode(true); $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 3 · ") + (LONG ? z.titulo : "Alrededores de la base");
+  show("juego"); stageMode(true); $("#hudRound").textContent = (S.mode === "mini" ? "" : "Ronda 3 · ") + z.titulo;
   wrongPenalty = 2; zoneFound0 = S.invFound; hintsLeft = 2; $("#hintRow").hidden = false; updateHint();
   zoneInv = drawScene($("#stage"), z.id, n); S.invTotal += zoneInv; updatePrompt2();
   onAllFound = function(){ nextZone(zi); }; playing = true; startTimer(z.seg, function(){ nextZone(zi); });
 }
 function nextZone(zi){
   stopRound();
-  if (zi === 0 && LONG){
+  if (zi === 0){
     var f = S.invFound - zoneFound0;
     intro(S.mode === "mini" ? "Minijuego · Zona 2" : "Ronda 3 · Zona 2", "Frente de un glaciar", [
       para("En la zona 1 encontraste " + f + " de " + zoneInv + " invasoras."),
@@ -860,7 +863,7 @@ function nextZone(zi){
     fact("Sus semillas traen hongos endófitos que la ayudan a germinar, sobrevivir y competir con las plantas nativas. Es la estrategia del “caballo de Troya”, estudiada en la UTalca.", ["molina23"]),
     fact("En experimentos en terreno, Poa annua compitió con el pasto antártico y el clavelito antártico y afectó su crecimiento y sobrevivencia.", ["molina19"]),
     fact("Para eliminarla hay que sacar la planta junto con su suelo, porque deja miles de semillas enterradas: cerca de 5.000 por metro cuadrado junto a una base.", ["wodk", "galera"])
-  ], S.mode === "mini" ? finish : startQuiz, S.mode === "mini" ? "Ver mi puntaje" : "Ronda 4: ¿qué harías tú?");
+  ], S.mode === "mini" || !LONG ? finish : startQuiz, S.mode === "mini" || !LONG ? "Ver mi puntaje" : "Ronda 4: ¿qué harías tú?");
 }
 
 /* ---------- Ronda 1: control de carga (¿pasa o no pasa?) ---------- */
@@ -908,7 +911,7 @@ function speedNode(){
   return w;
 }
 function introCarga(){
-  intro(S.mode === "mini" ? "Minijuego" : "Ronda 1 de 4", "¿Pasa o no pasa?", !LONG ? [
+  intro(S.mode === "mini" ? "Minijuego" : "Ronda 1 de " + (LONG ? 4 : 3), "¿Pasa o no pasa?", !LONG ? [
     para("Llega carga para una base antártica y avanza por la cinta. <strong>Toca un objeto</strong> para mandarlo a <strong>revisión</strong> si puede traer semillas, tierra o bichos. Lo que no toques <strong>pasa</strong> a la base."),
     speedNode()
   ] : [
@@ -927,6 +930,7 @@ function roundCarga(){
   deck = shuffle(ok.concat(bad)).map(itemCopy); di = 0; S.cargoRight = 0; S.cargoLeak = 0;
   var belt = $("#belt"), tray = $("#tray");
   belt.querySelectorAll(".bitem").forEach(function(n){ n.remove(); });
+  $("#beltFb").className = "belt-fb"; $("#beltFb").textContent = "";
   tray.querySelectorAll(".chip").forEach(function(n){ n.remove(); });
   var lv = BELT_LV[BELT_SPD];
   belt.style.setProperty("--bs", (28 / lv.v) + "s");
@@ -969,7 +973,7 @@ function decideItem(it, choice){
   it.d.done = true;
   var good = choice === it.d.ok;
   if (good){ setScore(10); S.cargoRight++; } else { setScore(-5); if (it.d.ok === "revisar") S.cargoLeak++; }
-  toast((good ? "¡Bien! " : "¡Ups! ") + it.d.r);
+  var fb = $("#beltFb"); fb.className = "belt-fb " + (good ? "ok" : "bad"); fb.textContent = (good ? "¡Bien! " : "¡Ups! ") + it.d.r;
   di++; updatePromptC();
   if (choice === "revisar"){
     var c = document.createElement("span"); c.className = "chip " + (good ? "ok" : "bad"); c.textContent = it.d.e; $("#tray").appendChild(c);
@@ -1060,7 +1064,7 @@ QUIZ = QUIZ.concat([
 ]);
 var QPICS = FAUNA.concat(TVS.slice(1));
 var QSET = [], qi = 0;
-function startQuiz(){ QSET = shuffle(QUIZ.slice()).slice(0, LONG ? 4 : 2); qi = 0; renderQ(); }
+function startQuiz(){ QSET = shuffle(QUIZ.slice()).slice(0, LONG ? 4 : (S.mode === "mini" ? 3 : 2)); qi = 0; renderQ(); }
 function renderQ(){
   var Q = QSET[qi];
   setFig($("#quizFig"), $("#quizImg"), $("#quizCap"), pick(QPICS));
@@ -1091,7 +1095,7 @@ $("#btnQuiz").onclick = function(){ qi++; if (qi < QSET.length) renderQ(); else 
 
 /* ---------- Final ---------- */
 function rankOf(sc){
-  var t = LONG ? [380, 280, 180] : [240, 180, 110];
+  var t = LONG ? [380, 280, 180] : [230, 170, 100];
   if (sc >= t[0]) return "Leyenda del Polo Sur";
   if (sc >= t[1]) return "Guardián/a de la Antártica";
   if (sc >= t[2]) return "Inspector/a de expedición";
@@ -1267,7 +1271,7 @@ $("#btnVolver").onclick = function(){ location.hash = ""; };
 function route(){
   var tv = location.hash === "#tv";
   LONG = location.hash === "#charla";
-  $("#modeNote").textContent = LONG ? "Versión completa para charlas · 4 rondas · 6 a 9 minutos" : "4 rondas · 3 a 5 minutos";
+  $("#modeNote").textContent = LONG ? "Versión completa para charlas · 4 rondas · 6 a 9 minutos" : "3 rondas · 3 a 5 minutos";
   $("#modeLink").textContent = LONG ? "Volver a la versión corta (feria)" : "¿Es para una charla o una clase? Abrir la versión completa";
   $("#modeLink").setAttribute("href", LONG ? "#feria" : "#charla");
   document.body.classList.toggle("tv", tv);
